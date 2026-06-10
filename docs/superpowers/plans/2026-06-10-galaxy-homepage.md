@@ -1978,7 +1978,8 @@ git commit -m "feat: adaptive particle count with fps governor"
 
 - [ ] **Step 1: Handle context loss in createScene**
 
-Add inside `createScene`, after `container.appendChild(renderer.domElement)`:
+Add inside `createScene`, after the `let running = true` declaration (the
+listener references `running`):
 
 ```ts
 renderer.domElement.addEventListener('webglcontextlost', (e) => {
@@ -1986,7 +1987,6 @@ renderer.domElement.addEventListener('webglcontextlost', (e) => {
   running = false
   const note = document.createElement('div')
   note.className = 'hud-panel open context-lost'
-  note.innerHTML = ''
   const msg = document.createElement('div')
   msg.className = 'hud-line'
   msg.textContent = 'RENDER LINK LOST'
