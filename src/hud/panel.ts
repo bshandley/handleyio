@@ -6,6 +6,8 @@ export interface Hud {
   open(node: GalaxyNode, anchor: Vector3): void
   close(): void
   openId(): string | null
+  /** True while the pointer is over the panel (keeps hover panels open). */
+  pointerOver(): boolean
   setLiveLines(nodeId: string, lines: string[]): void
   update(camera: Camera): void
 }
@@ -19,6 +21,13 @@ export function createHud(root: HTMLElement, leaderSvg: SVGSVGElement): Hud {
   const line = leaderSvg.querySelector('line')!
   const live = new Map<string, string[]>()
   let current: { node: GalaxyNode; anchor: Vector3 } | null = null
+  let over = false
+  el.addEventListener('pointerenter', () => {
+    over = true
+  })
+  el.addEventListener('pointerleave', () => {
+    over = false
+  })
 
   function render(node: GalaxyNode) {
     el.replaceChildren()
@@ -74,10 +83,12 @@ export function createHud(root: HTMLElement, leaderSvg: SVGSVGElement): Hud {
     },
     close() {
       current = null
+      over = false
       el.classList.remove('open')
       line.style.visibility = 'hidden'
     },
     openId: () => current?.node.id ?? null,
+    pointerOver: () => over,
     setLiveLines(nodeId, lines) {
       live.set(nodeId, lines)
       if (current?.node.id === nodeId) render(current.node)

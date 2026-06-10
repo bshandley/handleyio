@@ -75,7 +75,12 @@ export function wireInteraction(
 
   const candidates = NODES.map((n) => ({ id: n.id, position: beacons.worldPosition(n.id) }))
 
-  return function update() {
+  // Grace period before a hover/focus panel closes, so the pointer can
+  // travel from the beacon onto the panel without it vanishing.
+  const CLOSE_GRACE = 0.35
+  let graceT = 0
+
+  return function update(dt: number) {
     // hover (desktop)
     if (pointerOnCanvas) {
       ray.setFromCamera(pointer, camera)
@@ -85,16 +90,22 @@ export function wireInteraction(
         openNode(hit)
       } else if (!hit && hoverId) {
         hoverId = null
-        if (!pinnedId) hud.close()
-        else if (hud.openId() !== pinnedId) openNode(pinnedId)
+        if (pinnedId && hud.openId() !== pinnedId) openNode(pinnedId)
       }
     }
 
-    // focus mode (rotating a node to screen center)
-    if (!hoverId && !pinnedId) {
+    // focus mode (rotating a node to screen center) and deferred closing
+    if (hoverId || pinnedId || hud.pointerOver()) {
+      graceT = 0
+    } else {
       const f = focusedNode(candidates, camera)
-      if (f && hud.openId() !== f) openNode(f)
-      else if (!f && hud.openId()) hud.close()
+      if (f) {
+        graceT = 0
+        if (hud.openId() !== f) openNode(f)
+      } else if (hud.openId()) {
+        graceT += dt
+        if (graceT > CLOSE_GRACE) hud.close()
+      }
     }
 
     hud.update(camera)
