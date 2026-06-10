@@ -94,8 +94,8 @@ beacon star.
 - LinkedIn (https://www.linkedin.com/in/bshandley/): name and headline,
   Open button.
 
-The GitHub username and the LinkedIn headline text are configuration values
-in the node registry, supplied at implementation.
+GitHub username: bshandley. The LinkedIn headline text is a configuration
+value in the node registry, supplied at implementation.
 Desktop click on a beacon star behaves like mobile tap (opens the panel).
 
 ## Live data layer
