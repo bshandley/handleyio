@@ -90,11 +90,12 @@ beacon star.
 
 - GitHub: username/link, 30-day commit sparkline and count, last-push time,
   Open button.
-- Email (b@handley.io): address, Copy action, Compose (mailto) action.
-- LinkedIn: name and headline, Open button.
+- Email (hello@handley.io): address, Copy action, Compose (mailto) action.
+- LinkedIn (https://www.linkedin.com/in/bshandley/): name and headline,
+  Open button.
 
-Actual profile URLs (GitHub username, LinkedIn profile URL, headline text)
-are configuration values in the node registry, supplied at implementation.
+The GitHub username and the LinkedIn headline text are configuration values
+in the node registry, supplied at implementation.
 Desktop click on a beacon star behaves like mobile tap (opens the panel).
 
 ## Live data layer
