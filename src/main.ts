@@ -1,5 +1,6 @@
 import { createControls } from './camera/controls'
 import { createHud } from './hud/panel'
+import { createTelemetry } from './hud/telemetry'
 import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
 import { createScene, hasWebgl } from './scene'
@@ -31,12 +32,25 @@ function init() {
     hud,
   )
 
+  const telemetry = createTelemetry(
+    document.getElementById('hud')!,
+    controls,
+    sceneCtx.renderer,
+    NODES.length,
+  )
+  telemetry.setParticles(count)
+
   sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)
-    if (stepDown !== null) sceneCtx.galaxy.rebuild(stepDown)
+    if (stepDown !== null) {
+      sceneCtx.galaxy.rebuild(stepDown)
+      telemetry.setParticles(stepDown)
+    }
     controls.update()
     beacons.update(elapsed)
     updateInteraction(dt)
+    telemetry.setActiveNode(hud.openId())
+    telemetry.update(dt, elapsed)
   })
 
   sceneCtx.start()
@@ -44,8 +58,14 @@ function init() {
   for (const source of sources) {
     source
       .fetchData()
-      .then((data) => hud.setLiveLines(source.id, data.lines))
-      .catch(() => hud.setLiveLines(source.id, ['live data unavailable']))
+      .then((data) => {
+        hud.setLiveLines(source.id, data.lines)
+        telemetry.setLinkStatus('ok')
+      })
+      .catch(() => {
+        hud.setLiveLines(source.id, ['live data unavailable'])
+        telemetry.setLinkStatus('down')
+      })
   }
   document.getElementById('fallback')!.classList.add('hidden')
 }

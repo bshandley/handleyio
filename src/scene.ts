@@ -37,9 +37,12 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
   const clock = new Clock()
   const frameCbs: Array<(dt: number, elapsed: number) => void> = []
-  let elapsed = 0
+  // Start well into the swirl so differential rotation has already sheared
+  // the arms out of their symmetric phases (scaled with orbitalSpeed).
+  let elapsed = 160
   let running = true
   let contextLost = false
+  galaxy.setTime(elapsed)
 
   renderer.domElement.addEventListener('webglcontextlost', (e) => {
     e.preventDefault()

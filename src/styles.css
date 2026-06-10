@@ -103,3 +103,39 @@ body {
 .context-lost {
   top: 50%; left: 50%; transform: translate(-50%, -50%);
 }
+
+/* Ambient viewport telemetry */
+.hud-tele {
+  position: fixed; z-index: 4; pointer-events: none; user-select: none;
+  font-size: 10px; letter-spacing: 1.5px; line-height: 1.8;
+  color: rgba(138, 163, 192, 0.75); text-transform: uppercase;
+}
+.hud-tele-tl { top: 14px; left: 16px; }
+.hud-tele-tr { top: 14px; right: 16px; text-align: right; }
+.hud-tele-br { bottom: 14px; right: 16px; text-align: right; }
+.hud-tele-bl { bottom: 36px; left: 16px; }
+
+.hud-corner {
+  position: fixed; z-index: 4; width: 18px; height: 18px; pointer-events: none;
+  border: 0 solid rgba(140, 192, 255, 0.28);
+}
+.hud-corner-tl { top: 8px; left: 8px; border-top-width: 1px; border-left-width: 1px; }
+.hud-corner-tr { top: 8px; right: 8px; border-top-width: 1px; border-right-width: 1px; }
+.hud-corner-bl { bottom: 8px; left: 8px; border-bottom-width: 1px; border-left-width: 1px; }
+.hud-corner-br { bottom: 8px; right: 8px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* Focus reticle: sized by JS to the real activation threshold */
+.hud-reticle {
+  position: fixed; z-index: 1; left: 50%; top: 50%; pointer-events: none;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  border: 1px solid rgba(140, 192, 255, 0.10);
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+.hud-reticle.active {
+  border-color: rgba(140, 192, 255, 0.45);
+  box-shadow: 0 0 28px rgba(80, 150, 255, 0.12), inset 0 0 28px rgba(80, 150, 255, 0.08);
+}
+
+@media (max-width: 640px) {
+  .hud-tele-tr, .hud-tele-br { display: none; }
+}
