@@ -7,7 +7,7 @@ export interface GalaxyScene {
   camera: PerspectiveCamera
   renderer: WebGLRenderer
   galaxy: Galaxy
-  onFrame(cb: (dt: number) => void): void
+  onFrame(cb: (dt: number, elapsed: number) => void): void
   start(): void
 }
 
@@ -36,10 +36,13 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
 
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
   const clock = new Clock()
-  const frameCbs: Array<(dt: number) => void> = []
-  let elapsed = 0
+  const frameCbs: Array<(dt: number, elapsed: number) => void> = []
+  // Start well into the swirl so differential rotation has already sheared
+  // the arms out of their symmetric phases (scaled with orbitalSpeed).
+  let elapsed = 160
   let running = true
   let contextLost = false
+  galaxy.setTime(elapsed)
 
   renderer.domElement.addEventListener('webglcontextlost', (e) => {
     e.preventDefault()
@@ -77,7 +80,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
       elapsed += dt
       galaxy.setTime(elapsed)
     }
-    for (const cb of frameCbs) cb(dt)
+    for (const cb of frameCbs) cb(dt, elapsed)
     renderer.render(scene, camera)
     window.__frameCount = (window.__frameCount ?? 0) + 1
   }

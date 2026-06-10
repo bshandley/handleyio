@@ -25,7 +25,7 @@ export function createStarfield(count = 2500, rand: () => number = Math.random):
     sizeAttenuation: false,
     color: 0xbfd0ee,
     transparent: true,
-    opacity: 0.7,
+    opacity: 0.52,
     depthWrite: false,
     blending: AdditiveBlending,
   })

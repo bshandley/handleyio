@@ -88,8 +88,9 @@ Panel chrome: frosted glass slab (blur, soft border, glow shadow), node
 designation line for flavor (e.g. "NODE 01 · GH-SECTOR"), leader line to the
 beacon star.
 
-- GitHub: username/link, 30-day commit sparkline and count, last-push time,
-  Open button.
+- GitHub: username/link, 30-day push sparkline and count, last-push time,
+  Open button. (The unauthenticated public events API exposes pushes, not
+  per-push commit counts.)
 - Email (hello@handley.io): address, Copy action, Compose (mailto) action.
 - LinkedIn (https://www.linkedin.com/in/bshandley/): name and headline,
   Open button.
@@ -105,7 +106,7 @@ Desktop click on a beacon star behaves like mobile tap (opens the panel).
   fields when the fetch resolves. A slow or failed source never blocks
   anything.
 - GitHub source: public REST API, `/users/<user>/events/public`,
-  client-side, unauthenticated. Derives 30-day commit count, sparkline
+  client-side, unauthenticated. Derives 30-day push count, sparkline
   buckets, last-push time. Cached in localStorage, TTL 1 hour. Keeps usage
   far under the 60 req/hour unauthenticated limit.
 - On fetch failure (rate limit, offline): panel shows static content plus a
@@ -164,3 +165,29 @@ Safari (desktop and iOS).
   value still to be supplied.
 - The Playwright suite covers keyboard activation of every panel and the
   no-WebGL path; a click-on-beacon e2e test is a follow-up.
+
+## v1.1 polish round (2026-06-10, post-launch feedback)
+
+Changes driven by first-eyes review of the live build:
+
+- Galaxy realism: gaussian arm scatter, arm wobble, star-forming clumps
+  (blue-white), field stars off the arms, blackbody-axis color variation,
+  power-law sizes with rare white giants, fuzzy edge (soft cap 1.2x radius),
+  stars dimmed 25%.
+- Rotation: quartered (orbitalSpeed 0.0875/(0.3+r)); scene starts 160
+  simulated seconds in so arms load pre-sheared.
+- Beacons orbit with the galaxy on the same speed curve, sharing the
+  scene's elapsed time (reduced motion freezes both).
+- Hover panels: 350ms close grace plus pointer-over-panel hold.
+- Idle camera: drift continues the camera's last motion direction with a
+  speed ramp (no sudden reverse), plus a breathing zoom (180s cycle, max
+  40% closer, pauses on interaction, re-bases on resume).
+- Chevron node navigation (‹ › bottom-center, ArrowLeft/Right): flies the
+  camera to the next node around the core, closes any open panel at flight
+  start, pins the target's panel on arrival. Solves mobile travel between
+  off-screen nodes.
+- Ambient telemetry HUD: sector block (UTC, sim time), render stats (FPS,
+  live star count, draw calls), camera bearing readout, node/link status,
+  focus reticle sized to the activation threshold, corner brackets.
+- GitHub metric is pushes, not commits (unauthenticated events API strips
+  commit counts).

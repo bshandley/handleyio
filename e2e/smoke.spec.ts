@@ -2,11 +2,17 @@ import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   await page.route('https://api.github.com/**', (route) => {
+    // Slim payload shape, matching the unauthenticated public events API
     const events = [
       {
         type: 'PushEvent',
         created_at: new Date(Date.now() - 3_600_000).toISOString(),
-        payload: { size: 7 },
+        payload: { push_id: 1, ref: 'refs/heads/main' },
+      },
+      {
+        type: 'PushEvent',
+        created_at: new Date(Date.now() - 7_200_000).toISOString(),
+        payload: { push_id: 2, ref: 'refs/heads/main' },
       },
     ]
     return route.fulfill({ json: events })
@@ -34,11 +40,20 @@ test('keyboard opens each node panel', async ({ page }) => {
   await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
 })
 
-test('github panel shows live commit data', async ({ page }) => {
+test('github panel shows live push data', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'GITHUB' }).focus()
-  await expect(page.locator('.hud-panel')).toContainText('7 commits')
+  await expect(page.locator('.hud-panel')).toContainText('2 pushes')
   await expect(page.locator('.hud-panel')).toContainText('last push: 1h ago')
+})
+
+test('chevron navigation closes the open panel, then opens the target', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'GITHUB' }).focus()
+  await expect(page.locator('.hud-panel')).toHaveClass(/open/)
+  await page.getByRole('button', { name: 'Next node' }).click()
+  await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
+  await expect(page.locator('.hud-panel')).toHaveClass(/open/, { timeout: 8000 })
 })
 
 test('fallback shows when webgl is unavailable', async ({ page }) => {

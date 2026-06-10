@@ -5,12 +5,20 @@ import type { Beacons } from './nodes/beacons'
 import { nodeById, NODES } from './nodes/registry'
 import type { Hud } from './hud/panel'
 
+export interface Interaction {
+  update(dt: number): void
+  /** Open a node's panel and keep it open (used by chevron navigation). */
+  pin(id: string): void
+  /** Close any open panel and forget the pin (chevron flight start). */
+  clear(): void
+}
+
 export function wireInteraction(
   camera: PerspectiveCamera,
   canvas: HTMLCanvasElement,
   beacons: Beacons,
   hud: Hud,
-): (dt: number) => void {
+): Interaction {
   const ray = new Raycaster()
   const pointer = new Vector2()
   let pointerOnCanvas = false
@@ -75,7 +83,12 @@ export function wireInteraction(
 
   const candidates = NODES.map((n) => ({ id: n.id, position: beacons.worldPosition(n.id) }))
 
-  return function update() {
+  // Grace period before a hover/focus panel closes, so the pointer can
+  // travel from the beacon onto the panel without it vanishing.
+  const CLOSE_GRACE = 0.35
+  let graceT = 0
+
+  function update(dt: number) {
     // hover (desktop)
     if (pointerOnCanvas) {
       ray.setFromCamera(pointer, camera)
@@ -85,18 +98,37 @@ export function wireInteraction(
         openNode(hit)
       } else if (!hit && hoverId) {
         hoverId = null
-        if (!pinnedId) hud.close()
-        else if (hud.openId() !== pinnedId) openNode(pinnedId)
+        if (pinnedId && hud.openId() !== pinnedId) openNode(pinnedId)
       }
     }
 
-    // focus mode (rotating a node to screen center)
-    if (!hoverId && !pinnedId) {
+    // focus mode (rotating a node to screen center) and deferred closing
+    if (hoverId || pinnedId || hud.pointerOver()) {
+      graceT = 0
+    } else {
       const f = focusedNode(candidates, camera)
-      if (f && hud.openId() !== f) openNode(f)
-      else if (!f && hud.openId()) hud.close()
+      if (f) {
+        graceT = 0
+        if (hud.openId() !== f) openNode(f)
+      } else if (hud.openId()) {
+        graceT += dt
+        if (graceT > CLOSE_GRACE) hud.close()
+      }
     }
 
     hud.update(camera)
+  }
+
+  return {
+    update,
+    pin(id) {
+      pinnedId = id
+      openNode(id)
+    },
+    clear() {
+      pinnedId = null
+      hoverId = null
+      hud.close()
+    },
   }
 }

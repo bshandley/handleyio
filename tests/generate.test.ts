@@ -12,11 +12,17 @@ describe('generateGalaxy', () => {
     expect(g.color).toHaveLength(15000)
   })
 
-  it('keeps radii within bounds', () => {
+  it('keeps radii within the soft-edge bound (1.2x nominal radius)', () => {
     for (const r of g.radius) {
       expect(r).toBeGreaterThanOrEqual(0)
-      expect(r).toBeLessThanOrEqual(GALAXY_DEFAULTS.radius)
+      expect(r).toBeLessThanOrEqual(GALAXY_DEFAULTS.radius * 1.2)
     }
+  })
+
+  it('has a fuzzy edge: some stars past the nominal radius', () => {
+    let beyond = 0
+    for (const r of g.radius) if (r > GALAXY_DEFAULTS.radius) beyond++
+    expect(beyond).toBeGreaterThan(0)
   })
 
   it('keeps colors in [0, 1]', () => {

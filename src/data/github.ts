@@ -5,10 +5,11 @@ const WINDOW_DAYS = 30
 const BUCKETS = 10
 const BLOCKS = '▁▂▃▄▅▆▇█'
 
+// The unauthenticated public events API strips size/commits from PushEvent
+// payloads, so pushes are counted as events, not summed commits.
 interface GithubEvent {
   type: string
   created_at: string
-  payload: { size?: number }
 }
 
 export function timeAgo(ms: number): string {
@@ -27,17 +28,14 @@ export function parseGithubEvents(events: unknown[], now: number): NodeData {
   )
 
   const buckets = new Array<number>(BUCKETS).fill(0)
-  let total = 0
   let newest = -Infinity
   for (const e of pushes) {
     const t = Date.parse(e.created_at)
-    const commits = e.payload?.size ?? 0
-    total += commits
     newest = Math.max(newest, t)
     const age = now - t
     const bucket =
       BUCKETS - 1 - Math.min(BUCKETS - 1, Math.max(0, Math.floor(age / (windowMs / BUCKETS))))
-    buckets[bucket] += commits
+    buckets[bucket] += 1
   }
 
   const peak = Math.max(1, ...buckets)
@@ -47,7 +45,7 @@ export function parseGithubEvents(events: unknown[], now: number): NodeData {
 
   return {
     lines: [
-      `${spark} ${total} commits · ${WINDOW_DAYS}d`,
+      `${spark} ${pushes.length} push${pushes.length === 1 ? '' : 'es'} · ${WINDOW_DAYS}d`,
       pushes.length ? `last push: ${timeAgo(now - newest)}` : 'last push: n/a',
     ],
   }

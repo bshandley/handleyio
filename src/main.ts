@@ -1,5 +1,7 @@
 import { createControls } from './camera/controls'
 import { createHud } from './hud/panel'
+import { createNodeNav } from './hud/nodenav'
+import { createTelemetry } from './hud/telemetry'
 import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
 import { createScene, hasWebgl } from './scene'
@@ -15,7 +17,7 @@ function init() {
   const count = pickInitialCount(innerWidth, innerHeight, navigator.hardwareConcurrency ?? 4)
   const sceneCtx = createScene(app, count)
   const governor = new FpsGovernor(count)
-  const controls = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
+  const rig = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
 
   const beacons = createBeacons(NODES)
   sceneCtx.scene.add(beacons.group)
@@ -24,21 +26,40 @@ function init() {
     document.getElementById('hud')!,
     document.getElementById('leader') as unknown as SVGSVGElement,
   )
-  const updateInteraction = wireInteraction(
+  const interaction = wireInteraction(
     sceneCtx.camera,
     sceneCtx.renderer.domElement,
     beacons,
     hud,
   )
 
-  let pulseT = 0
-  sceneCtx.onFrame((dt) => {
+  const telemetry = createTelemetry(
+    document.getElementById('hud')!,
+    rig.controls,
+    sceneCtx.renderer,
+    NODES.length,
+  )
+  telemetry.setParticles(count)
+
+  createNodeNav(
+    document.getElementById('hud')!,
+    rig,
+    () => NODES.map((n) => ({ id: n.id, position: beacons.worldPosition(n.id) })),
+    interaction.pin,
+    interaction.clear,
+  )
+
+  sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)
-    if (stepDown !== null) sceneCtx.galaxy.rebuild(stepDown)
-    controls.update()
-    pulseT += dt
-    beacons.pulse(pulseT)
-    updateInteraction(dt)
+    if (stepDown !== null) {
+      sceneCtx.galaxy.rebuild(stepDown)
+      telemetry.setParticles(stepDown)
+    }
+    rig.update(dt)
+    beacons.update(elapsed)
+    interaction.update(dt)
+    telemetry.setActiveNode(hud.openId())
+    telemetry.update(dt, elapsed)
   })
 
   sceneCtx.start()
@@ -46,8 +67,14 @@ function init() {
   for (const source of sources) {
     source
       .fetchData()
-      .then((data) => hud.setLiveLines(source.id, data.lines))
-      .catch(() => hud.setLiveLines(source.id, ['live data unavailable']))
+      .then((data) => {
+        hud.setLiveLines(source.id, data.lines)
+        telemetry.setLinkStatus('ok')
+      })
+      .catch(() => {
+        hud.setLiveLines(source.id, ['live data unavailable'])
+        telemetry.setLinkStatus('down')
+      })
   }
   document.getElementById('fallback')!.classList.add('hidden')
 }

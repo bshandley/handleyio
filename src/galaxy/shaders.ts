@@ -9,7 +9,8 @@ attribute vec3 aColor;
 varying vec3 vColor;
 
 void main() {
-  float speed = 0.35 / (0.3 + aRadius);
+  // keep in sync with orbitalSpeed() in generate.ts (beacons orbit with it)
+  float speed = 0.0875 / (0.3 + aRadius);
   float angle = aAngle + uTime * speed;
   vec3 pos = vec3(cos(angle) * aRadius, aY, sin(angle) * aRadius);
   vec4 mv = modelViewMatrix * vec4(pos, 1.0);
@@ -22,10 +23,12 @@ void main() {
 export const galaxyFragment = /* glsl */ `
 varying vec3 vColor;
 
+const float DIM = 0.75;
+
 void main() {
   float d = length(gl_PointCoord - 0.5);
   float alpha = smoothstep(0.5, 0.0, d);
-  alpha *= alpha;
+  alpha *= alpha * DIM;
   gl_FragColor = vec4(vColor, alpha);
 }
 `
