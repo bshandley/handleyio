@@ -30,7 +30,8 @@ export function wireInteraction(
     hoverId = null
   })
 
-  canvas.addEventListener('click', () => {
+  canvas.addEventListener('click', (e) => {
+    pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1)
     ray.setFromCamera(pointer, camera)
     const hit = beacons.pick(ray)
     if (hit) {
@@ -59,8 +60,8 @@ export function wireInteraction(
       openNode(node.id)
     })
     b.addEventListener('click', () => {
-      const primary = node.actions[0]
-      if (primary.kind === 'open') open(primary.href, '_blank', 'noopener')
+      const primary = node.actions.find((a) => a.kind === 'open')
+      if (primary) open(primary.href, '_blank', 'noopener')
     })
     tabs.append(b)
   }
