@@ -151,3 +151,16 @@ Safari (desktop and iOS).
 - Additional data layers beyond GitHub commits (separate brainstorm).
 - Postprocessing bloom, audio, auto-tour mode.
 - Analytics, SEO beyond a title/description/social meta tags pass.
+
+## Deviations accepted during the v1 build
+
+- No separate fallback/ module: the no-WebGL fallback is static HTML in
+  index.html, hidden by JS only after successful init. Strictly more robust
+  (works with JS disabled); intent preserved.
+- "Camera eases slightly toward the node when a panel opens" is deferred to a
+  follow-up issue (BRA: camera ease on panel open). All other interaction
+  behavior shipped as specified.
+- LinkedIn panel shows the name line only; the headline text is a config
+  value still to be supplied.
+- The Playwright suite covers keyboard activation of every panel and the
+  no-WebGL path; a click-on-beacon e2e test is a follow-up.

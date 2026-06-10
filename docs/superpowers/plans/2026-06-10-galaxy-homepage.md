@@ -72,10 +72,11 @@
 - [ ] **Step 3: Write vite.config.ts**
 
 ```ts
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   build: { target: 'es2022' },
+  test: { passWithNoTests: true },
 })
 ```
 
@@ -153,7 +154,12 @@ body {
   position: fixed; width: 1px; height: 1px; overflow: hidden;
   clip-path: inset(50%); border: 0; padding: 0;
 }
-#node-tabs button:focus-visible { outline: 2px solid var(--hud-accent); }
+#node-tabs button:focus-visible {
+  clip-path: none;
+  width: auto; height: auto;
+  overflow: visible;
+  outline: 2px solid var(--hud-accent);
+}
 
 /* Fallback: CSS starfield plus glass link cards. Hidden by JS on WebGL success. */
 #fallback {
@@ -181,6 +187,7 @@ body {
   box-shadow: 0 4px 24px rgba(50, 120, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .glass-card:hover { border-color: rgba(140, 190, 255, 0.7); }
+.glass-card:focus-visible { outline: 2px solid var(--hud-accent); outline-offset: 2px; }
 ```
 
 - [ ] **Step 6: Write src/main.ts stub**
@@ -496,6 +503,13 @@ describe('parseGithubEvents', () => {
     expect(data.lines[0]).toContain('0 commits')
     expect(data.lines[1]).toBe('last push: n/a')
   })
+
+  it('clamps future-dated events into the newest bucket', () => {
+    const data = parseGithubEvents([pushEvent(-60_000, 2)], NOW)
+    const spark = data.lines[0].split(' ')[0]
+    expect(spark).toHaveLength(10)
+    expect(spark[9]).toBe('█')
+  })
 })
 
 describe('timeAgo', () => {
@@ -552,7 +566,8 @@ export function parseGithubEvents(events: unknown[], now: number): NodeData {
     total += commits
     newest = Math.max(newest, t)
     const age = now - t
-    const bucket = BUCKETS - 1 - Math.min(BUCKETS - 1, Math.floor(age / (windowMs / BUCKETS)))
+    const bucket =
+      BUCKETS - 1 - Math.min(BUCKETS - 1, Math.max(0, Math.floor(age / (windowMs / BUCKETS))))
     buckets[bucket] += commits
   }
 
@@ -949,6 +964,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   const frameCbs: Array<(dt: number) => void> = []
   let elapsed = 0
   let running = true
+  let contextLost = false
 
   addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight
@@ -957,7 +973,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   })
 
   document.addEventListener('visibilitychange', () => {
-    running = !document.hidden
+    running = !document.hidden && !contextLost
     if (running) clock.getDelta() // swallow the hidden-time delta
   })
 
@@ -1144,6 +1160,7 @@ describe('beacons', () => {
     camera.position.set(x, y, z + 3)
     camera.lookAt(x, y, z)
     camera.updateMatrixWorld()
+    camera.updateProjectionMatrix()
     const ray = new Raycaster()
     ray.setFromCamera(new Vector2(0, 0), camera)
     expect(beacons.pick(ray)).toBe('github')
@@ -1154,6 +1171,7 @@ describe('beacons', () => {
     camera.position.set(0, 50, 0)
     camera.lookAt(0, 100, 0)
     camera.updateMatrixWorld()
+    camera.updateProjectionMatrix()
     const ray = new Raycaster()
     ray.setFromCamera(new Vector2(0, 0), camera)
     expect(beacons.pick(ray)).toBeNull()
@@ -1215,11 +1233,14 @@ export function createBeacons(nodes: GalaxyNode[]): Beacons {
   const texture = haloTexture()
 
   for (const node of nodes) {
+    const geometry = new SphereGeometry(HIT_RADIUS, 8, 8)
+    geometry.computeBoundingSphere()
     const hit = new Mesh(
-      new SphereGeometry(HIT_RADIUS, 8, 8),
+      geometry,
       new MeshBasicMaterial({ visible: false }),
     )
     hit.position.set(...node.position)
+    hit.updateMatrixWorld(true)
     hit.userData.nodeId = node.id
     hitMeshes.push(hit)
     group.add(hit)
@@ -1633,6 +1654,8 @@ export function wireInteraction(
   let pointerOnCanvas = false
   let hoverId: string | null = null
   let pinnedId: string | null = null // set by tap/click/keyboard, survives focus drift
+  let downX = 0
+  let downY = 0
 
   function openNode(id: string) {
     hud.open(nodeById(id), beacons.worldPosition(id))
@@ -1646,8 +1669,14 @@ export function wireInteraction(
     pointerOnCanvas = false
     hoverId = null
   })
+  canvas.addEventListener('pointerdown', (e) => {
+    downX = e.clientX
+    downY = e.clientY
+  })
 
-  canvas.addEventListener('click', () => {
+  canvas.addEventListener('click', (e) => {
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return
+    pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1)
     ray.setFromCamera(pointer, camera)
     const hit = beacons.pick(ray)
     if (hit) {
@@ -1676,8 +1705,8 @@ export function wireInteraction(
       openNode(node.id)
     })
     b.addEventListener('click', () => {
-      const primary = node.actions[0]
-      if (primary.kind === 'open') open(primary.href, '_blank', 'noopener')
+      const primary = node.actions.find((a) => a.kind === 'open')
+      if (primary) open(primary.href, '_blank', 'noopener')
     })
     tabs.append(b)
   }
@@ -1695,6 +1724,7 @@ export function wireInteraction(
       } else if (!hit && hoverId) {
         hoverId = null
         if (!pinnedId) hud.close()
+        else if (hud.openId() !== pinnedId) openNode(pinnedId)
       }
     }
 
@@ -1957,15 +1987,16 @@ git commit -m "feat: adaptive particle count with fps governor"
 
 - [ ] **Step 1: Handle context loss in createScene**
 
-Add inside `createScene`, after `container.appendChild(renderer.domElement)`:
+Add inside `createScene`, after the `let running = true` declaration (the
+listener references `running`):
 
 ```ts
 renderer.domElement.addEventListener('webglcontextlost', (e) => {
   e.preventDefault()
+  contextLost = true
   running = false
   const note = document.createElement('div')
   note.className = 'hud-panel open context-lost'
-  note.innerHTML = ''
   const msg = document.createElement('div')
   msg.className = 'hud-line'
   msg.textContent = 'RENDER LINK LOST'
@@ -2039,6 +2070,9 @@ export default defineConfig({
 ```
 
 - [ ] **Step 3: Write e2e/smoke.spec.ts**
+
+Also add `include: ['tests/**/*.test.ts']` to the `test` block of vite.config.ts
+so vitest does not try to execute the Playwright spec.
 
 ```ts
 import { expect, test } from '@playwright/test'

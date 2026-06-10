@@ -1,0 +1,105 @@
+:root {
+  --hud-fg: #cde2ff;
+  --hud-accent: #8cc0ff;
+  --hud-dim: #8aa3c0;
+  --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  background: #04060f;
+  color: var(--hud-fg);
+  font-family: var(--mono);
+  overflow: hidden;
+}
+
+#app, #app canvas { position: fixed; inset: 0; }
+
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+
+#leader { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+#leader line { stroke: rgba(140, 192, 255, 0.6); stroke-width: 1; visibility: hidden; }
+
+#wordmark {
+  position: fixed; left: 16px; bottom: 14px; z-index: 4;
+  font-size: 13px; letter-spacing: 2px; color: var(--hud-dim);
+  user-select: none;
+}
+
+/* Visually hidden but focusable keyboard targets */
+#node-tabs button {
+  position: fixed; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); border: 0; padding: 0;
+}
+#node-tabs button:focus-visible {
+  clip-path: none;
+  width: auto; height: auto;
+  overflow: visible;
+  outline: 2px solid var(--hud-accent);
+}
+
+/* Fallback: CSS starfield plus glass link cards. Hidden by JS on WebGL success. */
+#fallback {
+  position: fixed; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  background:
+    radial-gradient(1px 1px at 12% 20%, #fff, transparent),
+    radial-gradient(1px 1px at 78% 16%, #cdf, transparent),
+    radial-gradient(1.5px 1.5px at 32% 74%, #ffe, transparent),
+    radial-gradient(1px 1px at 64% 86%, #fff, transparent),
+    radial-gradient(1px 1px at 88% 56%, #fec, transparent),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(80, 100, 200, 0.18), transparent 70%),
+    #04060f;
+}
+#fallback.hidden { display: none; }
+#fallback h1 { font-size: 18px; letter-spacing: 4px; font-weight: 400; }
+#fallback ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+
+.glass-card {
+  display: block; min-width: 240px; padding: 14px 20px; text-align: center;
+  color: #fff; text-decoration: none; font-size: 14px;
+  background: linear-gradient(160deg, rgba(40, 70, 120, 0.35), rgba(10, 20, 45, 0.55));
+  border: 1px solid rgba(140, 190, 255, 0.35); border-radius: 8px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 24px rgba(50, 120, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.glass-card:hover { border-color: rgba(140, 190, 255, 0.7); }
+.glass-card:focus-visible { outline: 2px solid var(--hud-accent); outline-offset: 2px; }
+
+.hud-panel {
+  position: absolute; top: 0; left: 0; width: 230px; padding: 12px 14px;
+  pointer-events: auto;
+  background: linear-gradient(160deg, rgba(40, 70, 120, 0.35), rgba(10, 20, 45, 0.55));
+  border: 1px solid rgba(140, 190, 255, 0.35); border-radius: 8px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 24px rgba(50, 120, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  font-size: 12px; line-height: 1.5;
+  opacity: 0; scale: 0.85; visibility: hidden;
+  transform-origin: bottom left;
+  transition: opacity 0.18s ease, scale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.18s;
+}
+.hud-panel.open { opacity: 1; scale: 1; visibility: visible; }
+
+.hud-designation { font-size: 9px; letter-spacing: 2px; color: var(--hud-dim); }
+.hud-title { margin-top: 4px; color: #fff; letter-spacing: 2px; font-size: 12px; }
+.hud-line { margin-top: 5px; color: var(--hud-fg); }
+.hud-line:first-of-type { color: #fff; }
+
+.hud-action {
+  display: block; margin-top: 9px; padding: 4px; text-align: center;
+  font: inherit; font-size: 11px; color: #dceaff; text-decoration: none; cursor: pointer;
+  background: rgba(120, 180, 255, 0.15);
+  border: 1px solid rgba(140, 190, 255, 0.4); border-radius: 5px; width: 100%;
+}
+.hud-action:hover { background: rgba(120, 180, 255, 0.3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-panel { transition: opacity 0.18s ease, visibility 0.18s; }
+}
+
+.context-lost {
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
