@@ -88,8 +88,9 @@ Panel chrome: frosted glass slab (blur, soft border, glow shadow), node
 designation line for flavor (e.g. "NODE 01 · GH-SECTOR"), leader line to the
 beacon star.
 
-- GitHub: username/link, 30-day commit sparkline and count, last-push time,
-  Open button.
+- GitHub: username/link, 30-day push sparkline and count, last-push time,
+  Open button. (The unauthenticated public events API exposes pushes, not
+  per-push commit counts.)
 - Email (hello@handley.io): address, Copy action, Compose (mailto) action.
 - LinkedIn (https://www.linkedin.com/in/bshandley/): name and headline,
   Open button.
@@ -105,7 +106,7 @@ Desktop click on a beacon star behaves like mobile tap (opens the panel).
   fields when the fetch resolves. A slow or failed source never blocks
   anything.
 - GitHub source: public REST API, `/users/<user>/events/public`,
-  client-side, unauthenticated. Derives 30-day commit count, sparkline
+  client-side, unauthenticated. Derives 30-day push count, sparkline
   buckets, last-push time. Cached in localStorage, TTL 1 hour. Keeps usage
   far under the 60 req/hour unauthenticated limit.
 - On fetch failure (rate limit, offline): panel shows static content plus a

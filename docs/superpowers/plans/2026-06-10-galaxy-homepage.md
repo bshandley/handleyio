@@ -463,29 +463,31 @@ import { parseGithubEvents, timeAgo } from '../src/data/github'
 const DAY = 86_400_000
 const NOW = 1_750_000_000_000
 
-function pushEvent(agoMs: number, commits: number) {
+// The unauthenticated public events API strips size/commits from PushEvent
+// payloads, so the fixture mirrors that slim shape.
+function pushEvent(agoMs: number) {
   return {
     type: 'PushEvent',
     created_at: new Date(NOW - agoMs).toISOString(),
-    payload: { size: commits },
+    payload: { push_id: 1, ref: 'refs/heads/main' },
   }
 }
 
 describe('parseGithubEvents', () => {
-  it('sums commits from PushEvents in the last 30 days', () => {
+  it('counts PushEvents in the last 30 days', () => {
     const events = [
-      pushEvent(1 * DAY, 3),
-      pushEvent(10 * DAY, 2),
-      pushEvent(40 * DAY, 99),
+      pushEvent(1 * DAY),
+      pushEvent(10 * DAY),
+      pushEvent(40 * DAY),
       { type: 'WatchEvent', created_at: new Date(NOW).toISOString(), payload: {} },
     ]
     const data = parseGithubEvents(events, NOW)
-    expect(data.lines[0]).toContain('5 commits')
+    expect(data.lines[0]).toContain('2 pushes')
     expect(data.lines[0]).toContain('30d')
   })
 
   it('renders a 10-bucket sparkline, oldest first', () => {
-    const events = [pushEvent(1 * DAY, 4)]
+    const events = [pushEvent(1 * DAY)]
     const data = parseGithubEvents(events, NOW)
     const spark = data.lines[0].split(' ')[0]
     expect(spark).toHaveLength(10)
@@ -493,19 +495,24 @@ describe('parseGithubEvents', () => {
     expect(spark[0]).toBe('▁')
   })
 
+  it('uses the singular for one push', () => {
+    const data = parseGithubEvents([pushEvent(1 * DAY)], NOW)
+    expect(data.lines[0]).toContain('1 push ·')
+  })
+
   it('reports last push time', () => {
-    const data = parseGithubEvents([pushEvent(2 * 3_600_000, 1)], NOW)
+    const data = parseGithubEvents([pushEvent(2 * 3_600_000)], NOW)
     expect(data.lines[1]).toBe('last push: 2h ago')
   })
 
   it('handles zero events', () => {
     const data = parseGithubEvents([], NOW)
-    expect(data.lines[0]).toContain('0 commits')
+    expect(data.lines[0]).toContain('0 pushes')
     expect(data.lines[1]).toBe('last push: n/a')
   })
 
   it('clamps future-dated events into the newest bucket', () => {
-    const data = parseGithubEvents([pushEvent(-60_000, 2)], NOW)
+    const data = parseGithubEvents([pushEvent(-60_000)], NOW)
     const spark = data.lines[0].split(' ')[0]
     expect(spark).toHaveLength(10)
     expect(spark[9]).toBe('█')
@@ -536,10 +543,11 @@ const WINDOW_DAYS = 30
 const BUCKETS = 10
 const BLOCKS = '▁▂▃▄▅▆▇█'
 
+// The unauthenticated public events API strips size/commits from PushEvent
+// payloads, so pushes are counted as events, not summed commits.
 interface GithubEvent {
   type: string
   created_at: string
-  payload: { size?: number }
 }
 
 export function timeAgo(ms: number): string {
@@ -558,17 +566,14 @@ export function parseGithubEvents(events: unknown[], now: number): NodeData {
   )
 
   const buckets = new Array<number>(BUCKETS).fill(0)
-  let total = 0
   let newest = -Infinity
   for (const e of pushes) {
     const t = Date.parse(e.created_at)
-    const commits = e.payload?.size ?? 0
-    total += commits
     newest = Math.max(newest, t)
     const age = now - t
     const bucket =
       BUCKETS - 1 - Math.min(BUCKETS - 1, Math.max(0, Math.floor(age / (windowMs / BUCKETS))))
-    buckets[bucket] += commits
+    buckets[bucket] += 1
   }
 
   const peak = Math.max(1, ...buckets)
@@ -578,7 +583,7 @@ export function parseGithubEvents(events: unknown[], now: number): NodeData {
 
   return {
     lines: [
-      `${spark} ${total} commits · ${WINDOW_DAYS}d`,
+      `${spark} ${pushes.length} push${pushes.length === 1 ? '' : 'es'} · ${WINDOW_DAYS}d`,
       pushes.length ? `last push: ${timeAgo(now - newest)}` : 'last push: n/a',
     ],
   }
@@ -600,7 +605,7 @@ export const githubSource: DataSource = {
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run tests/github.test.ts`
-Expected: PASS (5 tests). If the sparkline test fails on the max bucket character, check the bucket index math first, not the test.
+Expected: PASS (7 tests). If the sparkline test fails on the max bucket character, check the bucket index math first, not the test.
 
 - [ ] **Step 5: Commit**
 
@@ -2079,11 +2084,17 @@ import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   await page.route('https://api.github.com/**', (route) => {
+    // Slim payload shape, matching the unauthenticated public events API
     const events = [
       {
         type: 'PushEvent',
         created_at: new Date(Date.now() - 3_600_000).toISOString(),
-        payload: { size: 7 },
+        payload: { push_id: 1, ref: 'refs/heads/main' },
+      },
+      {
+        type: 'PushEvent',
+        created_at: new Date(Date.now() - 7_200_000).toISOString(),
+        payload: { push_id: 2, ref: 'refs/heads/main' },
       },
     ]
     return route.fulfill({ json: events })
@@ -2111,10 +2122,10 @@ test('keyboard opens each node panel', async ({ page }) => {
   await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
 })
 
-test('github panel shows live commit data', async ({ page }) => {
+test('github panel shows live push data', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'GITHUB' }).focus()
-  await expect(page.locator('.hud-panel')).toContainText('7 commits')
+  await expect(page.locator('.hud-panel')).toContainText('2 pushes')
   await expect(page.locator('.hud-panel')).toContainText('last push: 1h ago')
 })
 
