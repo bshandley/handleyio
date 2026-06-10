@@ -187,6 +187,7 @@ body {
   box-shadow: 0 4px 24px rgba(50, 120, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .glass-card:hover { border-color: rgba(140, 190, 255, 0.7); }
+.glass-card:focus-visible { outline: 2px solid var(--hud-accent); outline-offset: 2px; }
 ```
 
 - [ ] **Step 6: Write src/main.ts stub**
