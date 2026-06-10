@@ -1,3 +1,4 @@
+import { createControls } from './camera/controls'
 import { createScene, hasWebgl } from './scene'
 
 function init() {
@@ -5,6 +6,8 @@ function init() {
 
   const app = document.getElementById('app')!
   const sceneCtx = createScene(app, 60_000)
+  const controls = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
+  sceneCtx.onFrame(() => controls.update())
   sceneCtx.start()
   document.getElementById('fallback')!.classList.add('hidden')
 }
