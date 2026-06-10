@@ -4,6 +4,8 @@ import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
 import { createScene, hasWebgl } from './scene'
 import { wireInteraction } from './interaction'
+import { withCache } from './data/source'
+import { githubSource } from './data/github'
 
 function init() {
   if (!hasWebgl()) return
@@ -35,6 +37,13 @@ function init() {
   })
 
   sceneCtx.start()
+  const sources = [withCache(githubSource)]
+  for (const source of sources) {
+    source
+      .fetchData()
+      .then((data) => hud.setLiveLines(source.id, data.lines))
+      .catch(() => hud.setLiveLines(source.id, ['live data unavailable']))
+  }
   document.getElementById('fallback')!.classList.add('hidden')
 }
 
