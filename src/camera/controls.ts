@@ -1,9 +1,18 @@
+import { Vector3 } from 'three'
 import type { PerspectiveCamera } from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 const IDLE_RESUME_MS = 5000
 const DRIFT_SPEED = 0.25
 const RAMP_RATE = 1.5 // exponential approach toward the target speed, per second
+
+// Idle breathing zoom: dolly in toward the core and back out, much slower
+// than the rotation (one zoom cycle ~ 3/4 of a drift revolution).
+const ZOOM_PERIOD_S = 180
+const ZOOM_MARGIN = 0.5 // never dolly closer than minDistance + margin
+const ZOOM_DEPTH = 0.4 // dip at most this fraction of the base distance
+
+const scratchDir = new Vector3()
 
 export interface CameraRig {
   controls: OrbitControls
@@ -33,6 +42,8 @@ export function createControls(
   let driftDir = -1
   let speed = 0
   let prevAz = controls.getAzimuthalAngle()
+  let zoomPhase = 0
+  let zoomBase = controls.getDistance()
 
   let idleTimer: ReturnType<typeof setTimeout> | undefined
   controls.addEventListener('start', () => {
@@ -42,6 +53,9 @@ export function createControls(
   controls.addEventListener('end', () => {
     if (reducedMotion) return
     idleTimer = setTimeout(() => {
+      // restart the breathing cycle from wherever the user left the camera
+      zoomBase = controls.getDistance()
+      zoomPhase = 0
       drifting = true
     }, IDLE_RESUME_MS)
   })
@@ -59,6 +73,18 @@ export function createControls(
       const target = drifting ? DRIFT_SPEED * driftDir : 0
       speed += (target - speed) * Math.min(1, dt * RAMP_RATE)
       controls.autoRotateSpeed = speed
+
+      if (drifting) {
+        zoomPhase += (dt * Math.PI * 2) / ZOOM_PERIOD_S
+        const amp = Math.max(
+          0,
+          Math.min(zoomBase - controls.minDistance - ZOOM_MARGIN, zoomBase * ZOOM_DEPTH),
+        )
+        const dist = zoomBase - (amp * (1 - Math.cos(zoomPhase))) / 2
+        scratchDir.copy(camera.position).sub(controls.target).normalize()
+        camera.position.copy(controls.target).addScaledVector(scratchDir, dist)
+      }
+
       controls.update(dt)
     },
   }
