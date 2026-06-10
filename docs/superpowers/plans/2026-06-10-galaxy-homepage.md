@@ -503,6 +503,13 @@ describe('parseGithubEvents', () => {
     expect(data.lines[0]).toContain('0 commits')
     expect(data.lines[1]).toBe('last push: n/a')
   })
+
+  it('clamps future-dated events into the newest bucket', () => {
+    const data = parseGithubEvents([pushEvent(-60_000, 2)], NOW)
+    const spark = data.lines[0].split(' ')[0]
+    expect(spark).toHaveLength(10)
+    expect(spark[9]).toBe('█')
+  })
 })
 
 describe('timeAgo', () => {
@@ -559,7 +566,8 @@ export function parseGithubEvents(events: unknown[], now: number): NodeData {
     total += commits
     newest = Math.max(newest, t)
     const age = now - t
-    const bucket = BUCKETS - 1 - Math.min(BUCKETS - 1, Math.floor(age / (windowMs / BUCKETS)))
+    const bucket =
+      BUCKETS - 1 - Math.min(BUCKETS - 1, Math.max(0, Math.floor(age / (windowMs / BUCKETS))))
     buckets[bucket] += commits
   }
 

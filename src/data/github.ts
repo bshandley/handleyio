@@ -35,7 +35,8 @@ export function parseGithubEvents(events: unknown[], now: number): NodeData {
     total += commits
     newest = Math.max(newest, t)
     const age = now - t
-    const bucket = BUCKETS - 1 - Math.min(BUCKETS - 1, Math.floor(age / (windowMs / BUCKETS)))
+    const bucket =
+      BUCKETS - 1 - Math.min(BUCKETS - 1, Math.max(0, Math.floor(age / (windowMs / BUCKETS))))
     buckets[bucket] += commits
   }
 

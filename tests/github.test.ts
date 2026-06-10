@@ -44,6 +44,13 @@ describe('parseGithubEvents', () => {
     expect(data.lines[0]).toContain('0 commits')
     expect(data.lines[1]).toBe('last push: n/a')
   })
+
+  it('clamps future-dated events into the newest bucket', () => {
+    const data = parseGithubEvents([pushEvent(-60_000, 2)], NOW)
+    const spark = data.lines[0].split(' ')[0]
+    expect(spark).toHaveLength(10)
+    expect(spark[9]).toBe('█')
+  })
 })
 
 describe('timeAgo', () => {
