@@ -72,10 +72,11 @@
 - [ ] **Step 3: Write vite.config.ts**
 
 ```ts
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   build: { target: 'es2022' },
+  test: { passWithNoTests: true },
 })
 ```
 
@@ -153,7 +154,12 @@ body {
   position: fixed; width: 1px; height: 1px; overflow: hidden;
   clip-path: inset(50%); border: 0; padding: 0;
 }
-#node-tabs button:focus-visible { outline: 2px solid var(--hud-accent); }
+#node-tabs button:focus-visible {
+  clip-path: none;
+  width: auto; height: auto;
+  overflow: visible;
+  outline: 2px solid var(--hud-accent);
+}
 
 /* Fallback: CSS starfield plus glass link cards. Hidden by JS on WebGL success. */
 #fallback {
