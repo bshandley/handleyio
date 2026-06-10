@@ -20,6 +20,12 @@ export const GALAXY_DEFAULTS: GalaxyParams = {
   edgeColor: [0.45, 0.55, 1.0],
 }
 
+// Differential rotation curve. The galaxy vertex shader inlines the same
+// constants (see shaders.ts); keep them in sync.
+export function orbitalSpeed(radius: number): number {
+  return 0.35 / (0.3 + radius)
+}
+
 export interface GalaxyBuffers {
   radius: Float32Array
   angle: Float32Array

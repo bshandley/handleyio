@@ -7,7 +7,7 @@ export interface GalaxyScene {
   camera: PerspectiveCamera
   renderer: WebGLRenderer
   galaxy: Galaxy
-  onFrame(cb: (dt: number) => void): void
+  onFrame(cb: (dt: number, elapsed: number) => void): void
   start(): void
 }
 
@@ -36,7 +36,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
 
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
   const clock = new Clock()
-  const frameCbs: Array<(dt: number) => void> = []
+  const frameCbs: Array<(dt: number, elapsed: number) => void> = []
   let elapsed = 0
   let running = true
   let contextLost = false
@@ -77,7 +77,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
       elapsed += dt
       galaxy.setTime(elapsed)
     }
-    for (const cb of frameCbs) cb(dt)
+    for (const cb of frameCbs) cb(dt, elapsed)
     renderer.render(scene, camera)
     window.__frameCount = (window.__frameCount ?? 0) + 1
   }

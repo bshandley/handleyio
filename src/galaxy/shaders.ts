@@ -9,6 +9,7 @@ attribute vec3 aColor;
 varying vec3 vColor;
 
 void main() {
+  // keep in sync with orbitalSpeed() in generate.ts (beacons orbit with it)
   float speed = 0.35 / (0.3 + aRadius);
   float angle = aAngle + uTime * speed;
   vec3 pos = vec3(cos(angle) * aRadius, aY, sin(angle) * aRadius);

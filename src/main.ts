@@ -31,13 +31,11 @@ function init() {
     hud,
   )
 
-  let pulseT = 0
-  sceneCtx.onFrame((dt) => {
+  sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)
     if (stepDown !== null) sceneCtx.galaxy.rebuild(stepDown)
     controls.update()
-    pulseT += dt
-    beacons.pulse(pulseT)
+    beacons.update(elapsed)
     updateInteraction(dt)
   })
 
