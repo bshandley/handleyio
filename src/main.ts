@@ -6,12 +6,15 @@ import { createScene, hasWebgl } from './scene'
 import { wireInteraction } from './interaction'
 import { withCache } from './data/source'
 import { githubSource } from './data/github'
+import { FpsGovernor, pickInitialCount } from './quality'
 
 function init() {
   if (!hasWebgl()) return
 
   const app = document.getElementById('app')!
-  const sceneCtx = createScene(app, 60_000)
+  const count = pickInitialCount(innerWidth, innerHeight, navigator.hardwareConcurrency ?? 4)
+  const sceneCtx = createScene(app, count)
+  const governor = new FpsGovernor(count)
   const controls = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
 
   const beacons = createBeacons(NODES)
@@ -30,6 +33,8 @@ function init() {
 
   let pulseT = 0
   sceneCtx.onFrame((dt) => {
+    const stepDown = governor.update(dt)
+    if (stepDown !== null) sceneCtx.galaxy.rebuild(stepDown)
     controls.update()
     pulseT += dt
     beacons.pulse(pulseT)
