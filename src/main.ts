@@ -16,7 +16,7 @@ function init() {
   const count = pickInitialCount(innerWidth, innerHeight, navigator.hardwareConcurrency ?? 4)
   const sceneCtx = createScene(app, count)
   const governor = new FpsGovernor(count)
-  const controls = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
+  const rig = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
 
   const beacons = createBeacons(NODES)
   sceneCtx.scene.add(beacons.group)
@@ -34,7 +34,7 @@ function init() {
 
   const telemetry = createTelemetry(
     document.getElementById('hud')!,
-    controls,
+    rig.controls,
     sceneCtx.renderer,
     NODES.length,
   )
@@ -46,7 +46,7 @@ function init() {
       sceneCtx.galaxy.rebuild(stepDown)
       telemetry.setParticles(stepDown)
     }
-    controls.update()
+    rig.update(dt)
     beacons.update(elapsed)
     updateInteraction(dt)
     telemetry.setActiveNode(hud.openId())

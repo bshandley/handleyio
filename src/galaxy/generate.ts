@@ -75,8 +75,9 @@ export function generateGalaxy(
     let a: number
     let yy: number
     const roll = rand()
+    const inClump = roll < CLUMP_FRACTION
 
-    if (roll < CLUMP_FRACTION) {
+    if (inClump) {
       const c = clusters[Math.floor(rand() * clusters.length)]
       r = c.r + gauss() * 0.18
       a = c.a + (gauss() * 0.12) / Math.max(0.4, c.r * 0.5)
@@ -109,19 +110,27 @@ export function generateGalaxy(
     let cg = lerp(c0[1], c1[1], tt)
     let cb = lerp(c0[2], c1[2], tt)
 
-    // per-star temperature shift: warm <-> cool around the radial gradient
-    const temp = (rand() - 0.5) * 0.5
+    // per-star temperature shift along a blackbody-ish warm/cool axis:
+    // green moves with red (toward yellow-white) so nothing turns magenta
+    const temp = (rand() - 0.5) * 0.24
     cr += temp
+    cg += temp * 0.35
     cb -= temp
 
-    const jitter = 0.7 + rand() * 0.45
+    // star-forming clumps skew young and blue-white
+    if (inClump) {
+      cb += 0.08
+      cr -= 0.04
+    }
+
+    const jitter = 0.8 + rand() * 0.3
     const dust = rand() < DUST_CHANCE ? 0.3 : 1.0
 
-    // power-law sizes: mostly small, a handful of bright giants
+    // power-law sizes: mostly small, a handful of bright giants that wash
+    // evenly toward white
     const s = Math.pow(rand(), 4)
     size[i] = (0.6 + s * 4.5) * (t < 0.15 ? 1.4 : 1.0)
-    const brighten = s > BRIGHT_GIANT_CUTOFF ? 1.5 : 1.0
-    cg = s > BRIGHT_GIANT_CUTOFF ? cg + 0.2 : cg // giants wash toward white
+    const brighten = s > BRIGHT_GIANT_CUTOFF ? 1.4 : 1.0
 
     color[i * 3] = clamp01(cr * jitter * dust * brighten)
     color[i * 3 + 1] = clamp01(cg * jitter * dust * brighten)
