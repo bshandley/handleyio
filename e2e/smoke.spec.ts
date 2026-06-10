@@ -47,6 +47,12 @@ test('github panel shows live push data', async ({ page }) => {
   await expect(page.locator('.hud-panel')).toContainText('last push: 1h ago')
 })
 
+test('chevron navigation centers a node and opens its panel', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Next node' }).click()
+  await expect(page.locator('.hud-panel')).toHaveClass(/open/, { timeout: 8000 })
+})
+
 test('fallback shows when webgl is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext

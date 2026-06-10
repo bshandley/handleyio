@@ -1,5 +1,6 @@
 import { createControls } from './camera/controls'
 import { createHud } from './hud/panel'
+import { createNodeNav } from './hud/nodenav'
 import { createTelemetry } from './hud/telemetry'
 import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
@@ -39,6 +40,10 @@ function init() {
     NODES.length,
   )
   telemetry.setParticles(count)
+
+  createNodeNav(document.getElementById('hud')!, rig, () =>
+    NODES.map((n) => beacons.worldPosition(n.id)),
+  )
 
   sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)

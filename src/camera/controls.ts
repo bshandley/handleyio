@@ -17,7 +17,13 @@ const scratchDir = new Vector3()
 export interface CameraRig {
   controls: OrbitControls
   update(dt: number): void
+  /** Ease the camera around the core to the given azimuth (snap if reduced motion). */
+  flyToAzimuth(target: number): void
 }
+
+const FLY_RATE = 3 // exponential approach, per second
+const FLY_DONE_RAD = 0.01
+const Y_AXIS = new Vector3(0, 1, 0)
 
 export function createControls(
   camera: PerspectiveCamera,
@@ -44,25 +50,56 @@ export function createControls(
   let prevAz = controls.getAzimuthalAngle()
   let zoomPhase = 0
   let zoomBase = controls.getDistance()
+  let flyTarget: number | null = null
 
   let idleTimer: ReturnType<typeof setTimeout> | undefined
-  controls.addEventListener('start', () => {
-    drifting = false
-    clearTimeout(idleTimer)
-  })
-  controls.addEventListener('end', () => {
+  const armIdleResume = () => {
     if (reducedMotion) return
+    clearTimeout(idleTimer)
     idleTimer = setTimeout(() => {
-      // restart the breathing cycle from wherever the user left the camera
       zoomBase = controls.getDistance()
       zoomPhase = 0
       drifting = true
     }, IDLE_RESUME_MS)
+  }
+  controls.addEventListener('start', () => {
+    drifting = false
+    flyTarget = null // user input always wins over a chevron flight
+    clearTimeout(idleTimer)
   })
+  controls.addEventListener('end', armIdleResume)
+
+  const rotateBy = (step: number) => {
+    scratchDir.copy(camera.position).sub(controls.target)
+    scratchDir.applyAxisAngle(Y_AXIS, step)
+    camera.position.copy(controls.target).add(scratchDir)
+  }
 
   return {
     controls,
+    flyToAzimuth(target) {
+      drifting = false
+      clearTimeout(idleTimer)
+      if (reducedMotion) {
+        rotateBy(target - controls.getAzimuthalAngle())
+        prevAz = controls.getAzimuthalAngle()
+        return
+      }
+      flyTarget = target
+    },
     update(dt) {
+      if (flyTarget !== null) {
+        const az = controls.getAzimuthalAngle()
+        // shortest signed difference into (-PI, PI]
+        const delta = Math.atan2(Math.sin(flyTarget - az), Math.cos(flyTarget - az))
+        if (Math.abs(delta) < FLY_DONE_RAD) {
+          flyTarget = null
+          armIdleResume()
+        } else {
+          rotateBy(delta * Math.min(1, dt * FLY_RATE))
+        }
+      }
+
       const az = controls.getAzimuthalAngle()
       const dAz = az - prevAz
       prevAz = az

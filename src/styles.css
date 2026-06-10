@@ -139,3 +139,24 @@ body {
 @media (max-width: 640px) {
   .hud-tele-tr, .hud-tele-br { display: none; }
 }
+
+/* Chevron node navigation */
+.hud-nodenav {
+  position: fixed; z-index: 4; left: 50%; bottom: 18px;
+  transform: translateX(-50%);
+  display: flex; gap: 56px; pointer-events: none;
+}
+.hud-nodenav-btn {
+  pointer-events: auto; cursor: pointer;
+  width: 44px; height: 44px; padding: 0;
+  font: 22px/1 var(--mono); color: rgba(160, 195, 235, 0.7);
+  background: linear-gradient(160deg, rgba(40, 70, 120, 0.25), rgba(10, 20, 45, 0.4));
+  border: 1px solid rgba(140, 190, 255, 0.3); border-radius: 50%;
+  backdrop-filter: blur(4px);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.hud-nodenav-btn:hover, .hud-nodenav-btn:focus-visible {
+  color: #fff; border-color: rgba(140, 190, 255, 0.7);
+  background: rgba(120, 180, 255, 0.18);
+  outline: none;
+}
