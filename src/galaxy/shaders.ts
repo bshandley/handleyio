@@ -23,10 +23,12 @@ void main() {
 export const galaxyFragment = /* glsl */ `
 varying vec3 vColor;
 
+const float DIM = 0.75;
+
 void main() {
   float d = length(gl_PointCoord - 0.5);
   float alpha = smoothstep(0.5, 0.0, d);
-  alpha *= alpha;
+  alpha *= alpha * DIM;
   gl_FragColor = vec4(vColor, alpha);
 }
 `
