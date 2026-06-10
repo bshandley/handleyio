@@ -1,22 +1,39 @@
 import { createControls } from './camera/controls'
-import { createScene, hasWebgl } from './scene'
+import { createHud } from './hud/panel'
 import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
+import { createScene, hasWebgl } from './scene'
+import { wireInteraction } from './interaction'
 
 function init() {
-  if (!hasWebgl()) return // fallback section stays visible
+  if (!hasWebgl()) return
 
   const app = document.getElementById('app')!
   const sceneCtx = createScene(app, 60_000)
   const controls = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
-  sceneCtx.onFrame(() => controls.update())
+
   const beacons = createBeacons(NODES)
   sceneCtx.scene.add(beacons.group)
+
+  const hud = createHud(
+    document.getElementById('hud')!,
+    document.getElementById('leader') as unknown as SVGSVGElement,
+  )
+  const updateInteraction = wireInteraction(
+    sceneCtx.camera,
+    sceneCtx.renderer.domElement,
+    beacons,
+    hud,
+  )
+
   let pulseT = 0
   sceneCtx.onFrame((dt) => {
+    controls.update()
     pulseT += dt
     beacons.pulse(pulseT)
+    updateInteraction(dt)
   })
+
   sceneCtx.start()
   document.getElementById('fallback')!.classList.add('hidden')
 }
