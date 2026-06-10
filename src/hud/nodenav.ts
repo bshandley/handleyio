@@ -40,6 +40,7 @@ export function createNodeNav(
   rig: CameraRig,
   nodes: () => Array<{ id: string; position: Vector3 }>,
   pin: (id: string) => void,
+  clear: () => void,
 ): NodeNav {
   function go(dir: 1 | -1) {
     const list = nodes()
@@ -47,6 +48,7 @@ export function createNodeNav(
     const angles = list.map((n) => Math.atan2(n.position.x, n.position.z))
     const i = nextNode(rig.controls.getAzimuthalAngle(), angles, dir)
     if (i === -1) return
+    clear() // fly panel-free; the target panel pins on arrival
     rig.flyToAzimuth(angles[i], () => pin(list[i].id))
   }
 

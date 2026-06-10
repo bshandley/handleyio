@@ -47,9 +47,12 @@ test('github panel shows live push data', async ({ page }) => {
   await expect(page.locator('.hud-panel')).toContainText('last push: 1h ago')
 })
 
-test('chevron navigation centers a node and opens its panel', async ({ page }) => {
+test('chevron navigation closes the open panel, then opens the target', async ({ page }) => {
   await page.goto('/')
+  await page.getByRole('button', { name: 'GITHUB' }).focus()
+  await expect(page.locator('.hud-panel')).toHaveClass(/open/)
   await page.getByRole('button', { name: 'Next node' }).click()
+  await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
   await expect(page.locator('.hud-panel')).toHaveClass(/open/, { timeout: 8000 })
 })
 

@@ -9,6 +9,8 @@ export interface Interaction {
   update(dt: number): void
   /** Open a node's panel and keep it open (used by chevron navigation). */
   pin(id: string): void
+  /** Close any open panel and forget the pin (chevron flight start). */
+  clear(): void
 }
 
 export function wireInteraction(
@@ -122,6 +124,11 @@ export function wireInteraction(
     pin(id) {
       pinnedId = id
       openNode(id)
+    },
+    clear() {
+      pinnedId = null
+      hoverId = null
+      hud.close()
     },
   }
 }

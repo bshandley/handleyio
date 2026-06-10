@@ -46,6 +46,7 @@ function init() {
     rig,
     () => NODES.map((n) => ({ id: n.id, position: beacons.worldPosition(n.id) })),
     interaction.pin,
+    interaction.clear,
   )
 
   sceneCtx.onFrame((dt, elapsed) => {
