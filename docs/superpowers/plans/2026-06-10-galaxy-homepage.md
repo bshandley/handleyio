@@ -2061,6 +2061,9 @@ export default defineConfig({
 
 - [ ] **Step 3: Write e2e/smoke.spec.ts**
 
+Also add `include: ['tests/**/*.test.ts']` to the `test` block of vite.config.ts
+so vitest does not try to execute the Playwright spec.
+
 ```ts
 import { expect, test } from '@playwright/test'
 
