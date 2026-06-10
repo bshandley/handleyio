@@ -2256,3 +2256,14 @@ git push
 - Spec coverage: hybrid art direction (Tasks 5, 6, 8), frosted glass panel (Task 9), orbit momentum camera and idle drift (Task 7), focus/hover/tap/keyboard activation (Task 10), live GitHub data with cache and graceful failure (Tasks 3, 4, 11), wordmark (Task 1), adaptive quality, DPR cap, visibility pause, reduced motion (Tasks 6, 12), no-WebGL fallback and JS-failure-safe links (Tasks 1, 6, 14), context loss (Task 13), Vitest + Playwright on Chromium and Firefox (Tasks 2-5, 8-10, 12, 14), GitHub Pages (Task 15).
 - Spec deviation, intentional: no separate `fallback/` module. The fallback is static HTML in index.html plus a `hidden` class toggle, which is strictly more robust (works with JS disabled). Spec's intent (links always reachable) is preserved.
 - The `dataSourceId` field on nodes documents which source feeds which node; the wiring in Task 11 matches `source.id` to the panel's live-lines key, and the registry test pins `github` to `github`.
+
+---
+
+## Post-v1 polish round (2026-06-10)
+
+Commits 1bd93db..HEAD on galaxy-polish evolved several modules past the
+task blocks above (generate, shaders, scene, beacons, controls, panel,
+interaction, main, styles, e2e) and added src/hud/telemetry.ts and
+src/hud/nodenav.ts with their tests. For those modules the code and the
+spec's "v1.1 polish round" section are authoritative; the task blocks
+above remain accurate for the v1 architecture and the unchanged modules.
