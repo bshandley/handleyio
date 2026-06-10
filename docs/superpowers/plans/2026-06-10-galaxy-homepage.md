@@ -1159,6 +1159,7 @@ describe('beacons', () => {
     camera.position.set(x, y, z + 3)
     camera.lookAt(x, y, z)
     camera.updateMatrixWorld()
+    camera.updateProjectionMatrix()
     const ray = new Raycaster()
     ray.setFromCamera(new Vector2(0, 0), camera)
     expect(beacons.pick(ray)).toBe('github')
@@ -1169,6 +1170,7 @@ describe('beacons', () => {
     camera.position.set(0, 50, 0)
     camera.lookAt(0, 100, 0)
     camera.updateMatrixWorld()
+    camera.updateProjectionMatrix()
     const ray = new Raycaster()
     ray.setFromCamera(new Vector2(0, 0), camera)
     expect(beacons.pick(ray)).toBeNull()
@@ -1230,11 +1232,14 @@ export function createBeacons(nodes: GalaxyNode[]): Beacons {
   const texture = haloTexture()
 
   for (const node of nodes) {
+    const geometry = new SphereGeometry(HIT_RADIUS, 8, 8)
+    geometry.computeBoundingSphere()
     const hit = new Mesh(
-      new SphereGeometry(HIT_RADIUS, 8, 8),
+      geometry,
       new MeshBasicMaterial({ visible: false }),
     )
     hit.position.set(...node.position)
+    hit.updateMatrixWorld(true)
     hit.userData.nodeId = node.id
     hitMeshes.push(hit)
     group.add(hit)
