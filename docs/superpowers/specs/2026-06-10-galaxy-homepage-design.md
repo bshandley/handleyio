@@ -93,6 +93,10 @@ beacon star.
 - Email (b@handley.io): address, Copy action, Compose (mailto) action.
 - LinkedIn: name and headline, Open button.
 
+Actual profile URLs (GitHub username, LinkedIn profile URL, headline text)
+are configuration values in the node registry, supplied at implementation.
+Desktop click on a beacon star behaves like mobile tap (opens the panel).
+
 ## Live data layer
 
 - Interface: a data source exposes `fetch(): Promise<NodeData>` and a cache
