@@ -40,6 +40,22 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   let elapsed = 0
   let running = true
 
+  renderer.domElement.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault()
+    running = false
+    const note = document.createElement('div')
+    note.className = 'hud-panel open context-lost'
+    const msg = document.createElement('div')
+    msg.className = 'hud-line'
+    msg.textContent = 'RENDER LINK LOST'
+    const btn = document.createElement('button')
+    btn.className = 'hud-action'
+    btn.textContent = 'Reload'
+    btn.addEventListener('click', () => location.reload())
+    note.append(msg, btn)
+    document.getElementById('hud')!.append(note)
+  })
+
   addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight
     camera.updateProjectionMatrix()

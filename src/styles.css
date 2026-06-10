@@ -99,3 +99,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .hud-panel { transition: opacity 0.18s ease, visibility 0.18s; }
 }
+
+.context-lost {
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
