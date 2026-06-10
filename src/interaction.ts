@@ -5,12 +5,18 @@ import type { Beacons } from './nodes/beacons'
 import { nodeById, NODES } from './nodes/registry'
 import type { Hud } from './hud/panel'
 
+export interface Interaction {
+  update(dt: number): void
+  /** Open a node's panel and keep it open (used by chevron navigation). */
+  pin(id: string): void
+}
+
 export function wireInteraction(
   camera: PerspectiveCamera,
   canvas: HTMLCanvasElement,
   beacons: Beacons,
   hud: Hud,
-): (dt: number) => void {
+): Interaction {
   const ray = new Raycaster()
   const pointer = new Vector2()
   let pointerOnCanvas = false
@@ -80,7 +86,7 @@ export function wireInteraction(
   const CLOSE_GRACE = 0.35
   let graceT = 0
 
-  return function update(dt: number) {
+  function update(dt: number) {
     // hover (desktop)
     if (pointerOnCanvas) {
       ray.setFromCamera(pointer, camera)
@@ -109,5 +115,13 @@ export function wireInteraction(
     }
 
     hud.update(camera)
+  }
+
+  return {
+    update,
+    pin(id) {
+      pinnedId = id
+      openNode(id)
+    },
   }
 }

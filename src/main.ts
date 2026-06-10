@@ -26,7 +26,7 @@ function init() {
     document.getElementById('hud')!,
     document.getElementById('leader') as unknown as SVGSVGElement,
   )
-  const updateInteraction = wireInteraction(
+  const interaction = wireInteraction(
     sceneCtx.camera,
     sceneCtx.renderer.domElement,
     beacons,
@@ -41,8 +41,11 @@ function init() {
   )
   telemetry.setParticles(count)
 
-  createNodeNav(document.getElementById('hud')!, rig, () =>
-    NODES.map((n) => beacons.worldPosition(n.id)),
+  createNodeNav(
+    document.getElementById('hud')!,
+    rig,
+    () => NODES.map((n) => ({ id: n.id, position: beacons.worldPosition(n.id) })),
+    interaction.pin,
   )
 
   sceneCtx.onFrame((dt, elapsed) => {
@@ -53,7 +56,7 @@ function init() {
     }
     rig.update(dt)
     beacons.update(elapsed)
-    updateInteraction(dt)
+    interaction.update(dt)
     telemetry.setActiveNode(hud.openId())
     telemetry.update(dt, elapsed)
   })

@@ -1,28 +1,34 @@
 import type { Vector3 } from 'three'
 import type { CameraRig } from '../camera/controls'
 
-// Chevron navigation: fly the camera to the next node around the core.
-// Ending centered on the node lets focus mode open its panel for free.
+// Chevron navigation: fly the camera to the next node around the core and
+// pin its panel on arrival (azimuth alone cannot guarantee focus capture,
+// since the camera rides above the galactic plane).
 
 const TAU = Math.PI * 2
 const CENTERED_EPS = 0.15
 
 /**
- * Next camera azimuth that centers a node, moving in `dir` around the core.
- * Skips angles within eps of the current azimuth (already centered).
+ * Index of the node whose azimuth is nearest in `dir` around the core,
+ * skipping angles within eps of the current azimuth (already centered).
+ * Returns -1 when there is no candidate.
  */
-export function nextAzimuth(
+export function nextNode(
   current: number,
   angles: number[],
   dir: 1 | -1,
   eps = CENTERED_EPS,
 ): number {
   let best = Infinity
-  for (const a of angles) {
-    const d = ((((dir === 1 ? a - current : current - a) % TAU) + TAU) % TAU)
-    if (d > eps && d < best) best = d
+  let bestIndex = -1
+  for (let i = 0; i < angles.length; i++) {
+    const d = ((((dir === 1 ? angles[i] - current : current - angles[i]) % TAU) + TAU) % TAU)
+    if (d > eps && d < best) {
+      best = d
+      bestIndex = i
+    }
   }
-  return best === Infinity ? current : current + dir * best
+  return bestIndex
 }
 
 export interface NodeNav {
@@ -32,13 +38,16 @@ export interface NodeNav {
 export function createNodeNav(
   root: HTMLElement,
   rig: CameraRig,
-  nodePositions: () => Vector3[],
+  nodes: () => Array<{ id: string; position: Vector3 }>,
+  pin: (id: string) => void,
 ): NodeNav {
   function go(dir: 1 | -1) {
+    const list = nodes()
     // three's azimuth convention: atan2(x, z) around Y
-    const angles = nodePositions().map((p) => Math.atan2(p.x, p.z))
-    const target = nextAzimuth(rig.controls.getAzimuthalAngle(), angles, dir)
-    rig.flyToAzimuth(target)
+    const angles = list.map((n) => Math.atan2(n.position.x, n.position.z))
+    const i = nextNode(rig.controls.getAzimuthalAngle(), angles, dir)
+    if (i === -1) return
+    rig.flyToAzimuth(angles[i], () => pin(list[i].id))
   }
 
   const nav = document.createElement('div')

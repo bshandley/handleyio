@@ -18,7 +18,7 @@ export interface CameraRig {
   controls: OrbitControls
   update(dt: number): void
   /** Ease the camera around the core to the given azimuth (snap if reduced motion). */
-  flyToAzimuth(target: number): void
+  flyToAzimuth(target: number, onArrive?: () => void): void
 }
 
 const FLY_RATE = 3 // exponential approach, per second
@@ -51,6 +51,7 @@ export function createControls(
   let zoomPhase = 0
   let zoomBase = controls.getDistance()
   let flyTarget: number | null = null
+  let flyArrive: (() => void) | undefined
 
   let idleTimer: ReturnType<typeof setTimeout> | undefined
   const armIdleResume = () => {
@@ -65,6 +66,7 @@ export function createControls(
   controls.addEventListener('start', () => {
     drifting = false
     flyTarget = null // user input always wins over a chevron flight
+    flyArrive = undefined
     clearTimeout(idleTimer)
   })
   controls.addEventListener('end', armIdleResume)
@@ -77,15 +79,17 @@ export function createControls(
 
   return {
     controls,
-    flyToAzimuth(target) {
+    flyToAzimuth(target, onArrive) {
       drifting = false
       clearTimeout(idleTimer)
       if (reducedMotion) {
         rotateBy(target - controls.getAzimuthalAngle())
         prevAz = controls.getAzimuthalAngle()
+        onArrive?.()
         return
       }
       flyTarget = target
+      flyArrive = onArrive
     },
     update(dt) {
       if (flyTarget !== null) {
@@ -94,6 +98,8 @@ export function createControls(
         const delta = Math.atan2(Math.sin(flyTarget - az), Math.cos(flyTarget - az))
         if (Math.abs(delta) < FLY_DONE_RAD) {
           flyTarget = null
+          flyArrive?.()
+          flyArrive = undefined
           armIdleResume()
         } else {
           rotateBy(delta * Math.min(1, dt * FLY_RATE))
