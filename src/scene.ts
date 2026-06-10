@@ -39,9 +39,11 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   const frameCbs: Array<(dt: number) => void> = []
   let elapsed = 0
   let running = true
+  let contextLost = false
 
   renderer.domElement.addEventListener('webglcontextlost', (e) => {
     e.preventDefault()
+    contextLost = true
     running = false
     const note = document.createElement('div')
     note.className = 'hud-panel open context-lost'
@@ -63,7 +65,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   })
 
   document.addEventListener('visibilitychange', () => {
-    running = !document.hidden
+    running = !document.hidden && !contextLost
     if (running) clock.getDelta() // swallow the hidden-time delta
   })
 

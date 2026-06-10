@@ -964,6 +964,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   const frameCbs: Array<(dt: number) => void> = []
   let elapsed = 0
   let running = true
+  let contextLost = false
 
   addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight
@@ -972,7 +973,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   })
 
   document.addEventListener('visibilitychange', () => {
-    running = !document.hidden
+    running = !document.hidden && !contextLost
     if (running) clock.getDelta() // swallow the hidden-time delta
   })
 
@@ -1653,6 +1654,8 @@ export function wireInteraction(
   let pointerOnCanvas = false
   let hoverId: string | null = null
   let pinnedId: string | null = null // set by tap/click/keyboard, survives focus drift
+  let downX = 0
+  let downY = 0
 
   function openNode(id: string) {
     hud.open(nodeById(id), beacons.worldPosition(id))
@@ -1666,8 +1669,13 @@ export function wireInteraction(
     pointerOnCanvas = false
     hoverId = null
   })
+  canvas.addEventListener('pointerdown', (e) => {
+    downX = e.clientX
+    downY = e.clientY
+  })
 
   canvas.addEventListener('click', (e) => {
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return
     pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1)
     ray.setFromCamera(pointer, camera)
     const hit = beacons.pick(ray)
@@ -1716,6 +1724,7 @@ export function wireInteraction(
       } else if (!hit && hoverId) {
         hoverId = null
         if (!pinnedId) hud.close()
+        else if (hud.openId() !== pinnedId) openNode(pinnedId)
       }
     }
 
@@ -1984,6 +1993,7 @@ listener references `running`):
 ```ts
 renderer.domElement.addEventListener('webglcontextlost', (e) => {
   e.preventDefault()
+  contextLost = true
   running = false
   const note = document.createElement('div')
   note.className = 'hud-panel open context-lost'
