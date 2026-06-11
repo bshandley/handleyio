@@ -43,6 +43,22 @@ export const NODES: GalaxyNode[] = [
       { label: 'Open ↗', kind: 'open', href: 'https://www.linkedin.com/in/bshandley/' },
     ],
   },
+  {
+    id: 'pliny',
+    label: 'PLINY',
+    designation: 'NODE 04 · KANBAN-DOCK',
+    position: [1.8, -0.2, -1.9],
+    lines: ['getpliny.com', 'Self-hosted kanban board'],
+    actions: [{ label: 'Open ↗', kind: 'open', href: 'https://getpliny.com' }],
+  },
+  {
+    id: 'gatehouse',
+    label: 'GATEHOUSE',
+    designation: 'NODE 05 · VAULT-SECTOR',
+    position: [-3.2, 0.15, -0.8],
+    lines: ['gatehouse.to', 'Agent secrets vault'],
+    actions: [{ label: 'Open ↗', kind: 'open', href: 'https://gatehouse.to' }],
+  },
 ]
 
 export function nodeById(id: string): GalaxyNode {

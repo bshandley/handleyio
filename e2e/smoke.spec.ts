@@ -31,7 +31,7 @@ test('renders the galaxy and hides the fallback', async ({ page }) => {
 
 test('keyboard opens each node panel', async ({ page }) => {
   await page.goto('/')
-  for (const label of ['GITHUB', 'EMAIL', 'LINKEDIN']) {
+  for (const label of ['GITHUB', 'EMAIL', 'LINKEDIN', 'PLINY', 'GATEHOUSE']) {
     await page.getByRole('button', { name: label }).focus()
     await expect(page.locator('.hud-panel')).toHaveClass(/open/)
     await expect(page.locator('.hud-title')).toHaveText(label)
