@@ -55,7 +55,33 @@ export function createControls(
   let flyTarget: number | null = null
   let flyArrive: (() => void) | undefined
 
+  // "User active" needs camera-driving input: pointer travel past the same
+  // 6px click-vs-drag threshold the click handler uses, or a wheel zoom. A
+  // stationary press fires OrbitControls "start" but rotates nothing, and
+  // must not arm focus auto-open (BRA-63).
+  const DRAG_PX = 6
   let active = false
+  let pressed = false
+  let pressX = 0
+  let pressY = 0
+  dom.addEventListener('pointerdown', (e) => {
+    pressed = true
+    pressX = e.clientX
+    pressY = e.clientY
+  })
+  dom.addEventListener('pointermove', (e) => {
+    if (pressed && Math.hypot(e.clientX - pressX, e.clientY - pressY) > DRAG_PX) active = true
+  })
+  dom.addEventListener('pointerup', () => {
+    pressed = false
+  })
+  dom.addEventListener('pointercancel', () => {
+    pressed = false
+  })
+  dom.addEventListener('wheel', () => {
+    active = true
+  }, { passive: true })
+
   let idleTimer: ReturnType<typeof setTimeout> | undefined
   const armIdleResume = () => {
     clearTimeout(idleTimer)
@@ -68,7 +94,6 @@ export function createControls(
     }, IDLE_RESUME_MS)
   }
   controls.addEventListener('start', () => {
-    active = true
     drifting = false
     flyTarget = null // user input always wins over a chevron flight
     flyArrive = undefined

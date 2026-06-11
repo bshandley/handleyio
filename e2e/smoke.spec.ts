@@ -66,6 +66,22 @@ test('no panel opens without user interaction', async ({ page }) => {
   await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
 })
 
+test('a stationary press does not open a panel', async ({ page }) => {
+  // Pointerdown alone fires OrbitControls "start"; without pointer travel
+  // it must not count as camera rotation, or the first click pops the
+  // centered node's panel open on mousedown (BRA-63).
+  await page.setViewportSize({ width: 2200, height: 1000 })
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  await page.mouse.move(200, 200)
+  await page.mouse.down()
+  await page.waitForTimeout(500)
+  await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
+  await page.mouse.up()
+  await page.waitForTimeout(500)
+  await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
+})
+
 test('fallback shows when webgl is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext

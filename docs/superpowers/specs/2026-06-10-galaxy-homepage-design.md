@@ -201,9 +201,10 @@ transit the focus zone every few minutes and dwell there for tens of
 seconds, and on viewports wider than ~1.9:1 pliny sits inside the zone at
 load, so its panel opened unprompted on every visit.
 
-- Focus auto-open now requires user-driven camera motion: a pointer/wheel
-  gesture or the 5s window before idle drift resumes (rig.userActive).
-  Idle drift and page load never open panels.
+- Focus auto-open now requires user-driven camera motion: pointer travel
+  past the 6px click-vs-drag threshold or a wheel zoom, holding through
+  the 5s window before idle drift resumes (rig.userActive). Idle drift,
+  page load, and stationary presses never open panels.
 - An explicit dismissal (Escape, empty-space tap, chevron) suppresses
   focus-reopen for the dismissed node until it leaves the focus zone, not
   for a fixed 1s; the 1s timer remains for nodes sweeping center right
