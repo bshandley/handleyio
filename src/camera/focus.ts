@@ -7,6 +7,28 @@ export interface FocusCandidate {
   position: Vector3
 }
 
+export interface FocusGate {
+  /** Record an explicit dismissal of whatever node is currently focused. */
+  dismiss(focusedId: string | null): void
+  /** May the focused node auto-open? Clears suppression once focus moves off it. */
+  allow(focusedId: string | null): boolean
+}
+
+// A beacon can dwell near screen center for tens of seconds, so a dismissal
+// must hold until that node leaves focus, not for a fixed time (BRA-61).
+export function createFocusGate(): FocusGate {
+  let suppressedId: string | null = null
+  return {
+    dismiss(focusedId) {
+      suppressedId = focusedId
+    },
+    allow(focusedId) {
+      if (focusedId !== suppressedId) suppressedId = null
+      return focusedId !== null && suppressedId === null
+    },
+  }
+}
+
 export function focusedNode(
   candidates: FocusCandidate[],
   camera: Camera,
