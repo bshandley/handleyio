@@ -1,6 +1,6 @@
 import { Raycaster, Vector2 } from 'three'
 import type { PerspectiveCamera } from 'three'
-import { focusedNode } from './camera/focus'
+import { createFocusGate, focusedNode } from './camera/focus'
 import type { Beacons } from './nodes/beacons'
 import { nodeById, NODES } from './nodes/registry'
 import type { Hud } from './hud/panel'
@@ -27,10 +27,14 @@ export function wireInteraction(
   let downX = 0
   let downY = 0
   // After an explicit dismissal (Escape, empty-space tap, chevron flight)
-  // focus mode must not instantly reopen a panel on whatever node happens
-  // to sit near screen center.
+  // focus mode must not reopen a panel: the timer covers nodes sweeping
+  // through center right after dismissal (chevron flight), the gate holds
+  // the dismissed node itself for its whole dwell near center (BRA-61).
   const FOCUS_SUPPRESS = 1.0
   let focusSuppressT = 0
+  const gate = createFocusGate()
+
+  const candidates = NODES.map((n) => ({ id: n.id, position: beacons.worldPosition(n.id) }))
 
   function openNode(id: string) {
     hud.open(nodeById(id), beacons.worldPosition(id))
@@ -41,6 +45,7 @@ export function wireInteraction(
     hoverId = null
     hud.close()
     focusSuppressT = FOCUS_SUPPRESS
+    gate.dismiss(focusedNode(candidates, camera))
   }
 
   canvas.addEventListener('pointermove', (e) => {
@@ -89,8 +94,6 @@ export function wireInteraction(
     tabs.append(b)
   }
 
-  const candidates = NODES.map((n) => ({ id: n.id, position: beacons.worldPosition(n.id) }))
-
   // Grace period before a hover/focus panel closes, so the pointer can
   // travel from the beacon onto the panel without it vanishing.
   const CLOSE_GRACE = 0.35
@@ -117,9 +120,10 @@ export function wireInteraction(
       graceT = 0
     } else {
       const f = focusedNode(candidates, camera)
+      const allowed = gate.allow(f)
       if (f) {
         graceT = 0
-        if (focusSuppressT <= 0 && hud.openId() !== f) openNode(f)
+        if (focusSuppressT <= 0 && allowed && hud.openId() !== f) openNode(f)
       } else if (hud.openId()) {
         graceT += dt
         if (graceT > CLOSE_GRACE) hud.close()

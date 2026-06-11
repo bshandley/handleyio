@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PerspectiveCamera, Vector3 } from 'three'
-import { focusedNode } from '../src/camera/focus'
+import { createFocusGate, focusedNode } from '../src/camera/focus'
 
 const camera = new PerspectiveCamera(55, 2, 0.1, 200)
 camera.position.set(0, 0, 10)
@@ -28,5 +28,39 @@ describe('focusedNode', () => {
   it('ignores nodes behind the camera', () => {
     const id = focusedNode([{ id: 'c', position: new Vector3(0, 0, 20) }], camera)
     expect(id).toBeNull()
+  })
+})
+
+describe('createFocusGate', () => {
+  it('allows a node that drifts into focus', () => {
+    const gate = createFocusGate()
+    expect(gate.allow('pliny')).toBe(true)
+  })
+
+  it('blocks the dismissed node for as long as it stays focused', () => {
+    const gate = createFocusGate()
+    gate.dismiss('pliny')
+    expect(gate.allow('pliny')).toBe(false)
+    expect(gate.allow('pliny')).toBe(false)
+  })
+
+  it('lifts suppression once the dismissed node leaves focus', () => {
+    const gate = createFocusGate()
+    gate.dismiss('pliny')
+    expect(gate.allow(null)).toBe(false)
+    expect(gate.allow('pliny')).toBe(true)
+  })
+
+  it('opens a different node immediately and forgets the dismissal', () => {
+    const gate = createFocusGate()
+    gate.dismiss('pliny')
+    expect(gate.allow('email')).toBe(true)
+    expect(gate.allow('pliny')).toBe(true)
+  })
+
+  it('dismissing with no focused node suppresses nothing', () => {
+    const gate = createFocusGate()
+    gate.dismiss(null)
+    expect(gate.allow('pliny')).toBe(true)
   })
 })
