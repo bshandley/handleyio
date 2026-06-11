@@ -56,6 +56,16 @@ test('chevron navigation closes the open panel, then opens the target', async ({
   await expect(page.locator('.hud-panel')).toHaveClass(/open/, { timeout: 8000 })
 })
 
+test('no panel opens without user interaction', async ({ page }) => {
+  // Wide viewport puts pliny inside the focus zone at load (BRA-62);
+  // focus auto-open must stay quiet while camera motion is not user-driven.
+  await page.setViewportSize({ width: 2200, height: 1000 })
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  await page.waitForTimeout(3000)
+  await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
+})
+
 test('fallback shows when webgl is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext

@@ -32,35 +32,48 @@ describe('focusedNode', () => {
 })
 
 describe('createFocusGate', () => {
-  it('allows a node that drifts into focus', () => {
+  it('allows a node the user rotates into focus', () => {
     const gate = createFocusGate()
-    expect(gate.allow('pliny')).toBe(true)
+    expect(gate.allow('pliny', true)).toBe(true)
+  })
+
+  it('blocks any auto-open while camera motion is not user-driven', () => {
+    const gate = createFocusGate()
+    expect(gate.allow('pliny', false)).toBe(false)
+    expect(gate.allow('email', false)).toBe(false)
   })
 
   it('blocks the dismissed node for as long as it stays focused', () => {
     const gate = createFocusGate()
     gate.dismiss('pliny')
-    expect(gate.allow('pliny')).toBe(false)
-    expect(gate.allow('pliny')).toBe(false)
+    expect(gate.allow('pliny', true)).toBe(false)
+    expect(gate.allow('pliny', true)).toBe(false)
+  })
+
+  it('keeps suppressing a dismissed node across an idle stretch', () => {
+    const gate = createFocusGate()
+    gate.dismiss('pliny')
+    expect(gate.allow('pliny', false)).toBe(false)
+    expect(gate.allow('pliny', true)).toBe(false)
   })
 
   it('lifts suppression once the dismissed node leaves focus', () => {
     const gate = createFocusGate()
     gate.dismiss('pliny')
-    expect(gate.allow(null)).toBe(false)
-    expect(gate.allow('pliny')).toBe(true)
+    expect(gate.allow(null, true)).toBe(false)
+    expect(gate.allow('pliny', true)).toBe(true)
   })
 
   it('opens a different node immediately and forgets the dismissal', () => {
     const gate = createFocusGate()
     gate.dismiss('pliny')
-    expect(gate.allow('email')).toBe(true)
-    expect(gate.allow('pliny')).toBe(true)
+    expect(gate.allow('email', true)).toBe(true)
+    expect(gate.allow('pliny', true)).toBe(true)
   })
 
   it('dismissing with no focused node suppresses nothing', () => {
     const gate = createFocusGate()
     gate.dismiss(null)
-    expect(gate.allow('pliny')).toBe(true)
+    expect(gate.allow('pliny', true)).toBe(true)
   })
 })

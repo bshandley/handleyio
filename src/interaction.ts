@@ -18,6 +18,7 @@ export function wireInteraction(
   canvas: HTMLCanvasElement,
   beacons: Beacons,
   hud: Hud,
+  userActive: () => boolean,
 ): Interaction {
   const ray = new Raycaster()
   const pointer = new Vector2()
@@ -120,7 +121,7 @@ export function wireInteraction(
       graceT = 0
     } else {
       const f = focusedNode(candidates, camera)
-      const allowed = gate.allow(f)
+      const allowed = gate.allow(f, userActive())
       if (f) {
         graceT = 0
         if (focusSuppressT <= 0 && allowed && hud.openId() !== f) openNode(f)
