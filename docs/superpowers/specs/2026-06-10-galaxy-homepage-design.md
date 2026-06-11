@@ -191,3 +191,20 @@ Changes driven by first-eyes review of the live build:
   focus reticle sized to the activation threshold, corner brackets.
 - GitHub metric is pushes, not commits (unauthenticated events API strips
   commit counts).
+
+## v1.2 focus mode refinements (2026-06-11, BRA-61/BRA-62)
+
+"Rotating a node to within a small radius of screen center" means the user
+rotating. As shipped in v1, focus-open also fired during idle auto-drift
+and at page load: with beacons orbiting, below-plane nodes (pliny, email)
+transit the focus zone every few minutes and dwell there for tens of
+seconds, and on viewports wider than ~1.9:1 pliny sits inside the zone at
+load, so its panel opened unprompted on every visit.
+
+- Focus auto-open now requires user-driven camera motion: a pointer/wheel
+  gesture or the 5s window before idle drift resumes (rig.userActive).
+  Idle drift and page load never open panels.
+- An explicit dismissal (Escape, empty-space tap, chevron) suppresses
+  focus-reopen for the dismissed node until it leaves the focus zone, not
+  for a fixed 1s; the 1s timer remains for nodes sweeping center right
+  after a chevron flight starts.

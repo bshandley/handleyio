@@ -31,6 +31,7 @@ function init() {
     sceneCtx.renderer.domElement,
     beacons,
     hud,
+    rig.userActive,
   )
 
   const telemetry = createTelemetry(

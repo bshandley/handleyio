@@ -19,6 +19,8 @@ export interface CameraRig {
   update(dt: number): void
   /** Ease the camera around the core to the given azimuth (snap if reduced motion). */
   flyToAzimuth(target: number, onArrive?: () => void): void
+  /** True during a pointer/wheel gesture and the idle window after it. */
+  userActive(): boolean
 }
 
 const FLY_RATE = 3 // exponential approach, per second
@@ -53,17 +55,20 @@ export function createControls(
   let flyTarget: number | null = null
   let flyArrive: (() => void) | undefined
 
+  let active = false
   let idleTimer: ReturnType<typeof setTimeout> | undefined
   const armIdleResume = () => {
-    if (reducedMotion) return
     clearTimeout(idleTimer)
     idleTimer = setTimeout(() => {
+      active = false
+      if (reducedMotion) return
       zoomBase = controls.getDistance()
       zoomPhase = 0
       drifting = true
     }, IDLE_RESUME_MS)
   }
   controls.addEventListener('start', () => {
+    active = true
     drifting = false
     flyTarget = null // user input always wins over a chevron flight
     flyArrive = undefined
@@ -79,6 +84,7 @@ export function createControls(
 
   return {
     controls,
+    userActive: () => active,
     flyToAzimuth(target, onArrive) {
       drifting = false
       clearTimeout(idleTimer)
