@@ -26,9 +26,21 @@ export function wireInteraction(
   let pinnedId: string | null = null // set by tap/click/keyboard, survives focus drift
   let downX = 0
   let downY = 0
+  // After an explicit dismissal (Escape, empty-space tap, chevron flight)
+  // focus mode must not instantly reopen a panel on whatever node happens
+  // to sit near screen center.
+  const FOCUS_SUPPRESS = 1.0
+  let focusSuppressT = 0
 
   function openNode(id: string) {
     hud.open(nodeById(id), beacons.worldPosition(id))
+  }
+
+  function dismiss() {
+    pinnedId = null
+    hoverId = null
+    hud.close()
+    focusSuppressT = FOCUS_SUPPRESS
   }
 
   canvas.addEventListener('pointermove', (e) => {
@@ -53,16 +65,12 @@ export function wireInteraction(
       pinnedId = hit
       openNode(hit)
     } else {
-      pinnedId = null
-      hud.close()
+      dismiss()
     }
   })
 
   addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      pinnedId = null
-      hud.close()
-    }
+    if (e.key === 'Escape') dismiss()
   })
 
   // Hidden focusable buttons for keyboard access
@@ -102,6 +110,8 @@ export function wireInteraction(
       }
     }
 
+    if (focusSuppressT > 0) focusSuppressT -= dt
+
     // focus mode (rotating a node to screen center) and deferred closing
     if (hoverId || pinnedId || hud.pointerOver()) {
       graceT = 0
@@ -109,7 +119,7 @@ export function wireInteraction(
       const f = focusedNode(candidates, camera)
       if (f) {
         graceT = 0
-        if (hud.openId() !== f) openNode(f)
+        if (focusSuppressT <= 0 && hud.openId() !== f) openNode(f)
       } else if (hud.openId()) {
         graceT += dt
         if (graceT > CLOSE_GRACE) hud.close()
@@ -125,10 +135,6 @@ export function wireInteraction(
       pinnedId = id
       openNode(id)
     },
-    clear() {
-      pinnedId = null
-      hoverId = null
-      hud.close()
-    },
+    clear: dismiss,
   }
 }
