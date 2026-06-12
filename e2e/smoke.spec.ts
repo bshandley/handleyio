@@ -106,3 +106,16 @@ test('fallback shows when webgl is unavailable', async ({ page }) => {
     'https://github.com/bshandley',
   )
 })
+
+test('identity and meta are present', async ({ page }) => {
+  await page.goto('/')
+  await expect(page).toHaveTitle('Bradley Handley · handley.io')
+  await expect(page.locator('#wordmark .id-name')).toHaveText('Bradley Handley')
+  await expect(page.locator('#wordmark .id-line')).toContainText('Perpetually tired')
+  expect(await page.locator('meta[property="og:image"]').getAttribute('content')).toBe(
+    'https://handley.io/og.png',
+  )
+  const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').innerText())
+  expect(ld['@type']).toBe('Person')
+  expect(ld.name).toBe('Bradley Handley')
+})

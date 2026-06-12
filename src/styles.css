@@ -25,9 +25,12 @@ body {
 
 #wordmark {
   position: fixed; left: 16px; bottom: 14px; z-index: 4;
-  font-size: 13px; letter-spacing: 2px; color: var(--hud-dim);
-  user-select: none;
+  letter-spacing: 2px; color: var(--hud-dim);
+  user-select: none; text-transform: uppercase; line-height: 1.8;
 }
+#wordmark .id-site { font-size: 13px; }
+#wordmark .id-name { font-size: 12px; letter-spacing: 2px; color: var(--hud-fg); }
+#wordmark .id-line { font-size: 10px; letter-spacing: 1.5px; user-select: text; }
 
 /* Visually hidden but focusable keyboard targets */
 #node-tabs button {
@@ -56,6 +59,7 @@ body {
 }
 #fallback.hidden { display: none; }
 #fallback h1 { font-size: 18px; letter-spacing: 4px; font-weight: 400; }
+#fallback .fallback-id { font-size: 12px; letter-spacing: 2px; color: var(--hud-dim); }
 #fallback ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
 
 .glass-card {
@@ -113,7 +117,7 @@ body {
 .hud-tele-tl { top: 14px; left: 16px; }
 .hud-tele-tr { top: 14px; right: 16px; text-align: right; }
 .hud-tele-br { bottom: 14px; right: 16px; text-align: right; }
-.hud-tele-bl { bottom: 36px; left: 16px; }
+.hud-tele-bl { bottom: 84px; left: 16px; }
 
 .hud-corner {
   position: fixed; z-index: 4; width: 18px; height: 18px; pointer-events: none;
