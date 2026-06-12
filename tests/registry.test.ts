@@ -38,4 +38,8 @@ describe('node registry', () => {
     expect(nodeById('github').dataSourceId).toBe('github')
     expect(() => nodeById('nope')).toThrow()
   })
+
+  it('linkedin panel carries the headline', () => {
+    expect(nodeById('linkedin').lines).toEqual(['Bradley Handley', 'Cloud security leader'])
+  })
 })

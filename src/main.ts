@@ -6,7 +6,8 @@ import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
 import { createScene, hasWebgl } from './scene'
 import { wireInteraction } from './interaction'
-import { withCache } from './data/source'
+import { createHint, HintModel } from './hud/hint'
+import { safeStorage, withCache } from './data/source'
 import { githubSource } from './data/github'
 import { FpsGovernor, pickInitialCount } from './quality'
 
@@ -50,6 +51,17 @@ function init() {
     interaction.clear,
   )
 
+  // e2e hook: screen-space position of a beacon (test-only, allocates)
+  window.__nodeScreen = (id: string) => {
+    const v = beacons.worldPosition(id).clone().project(sceneCtx.camera)
+    return {
+      x: ((v.x + 1) / 2) * innerWidth,
+      y: ((1 - v.y) / 2) * innerHeight,
+    }
+  }
+
+  const hint = createHint(document.getElementById('hud')!, new HintModel(safeStorage()))
+
   sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)
     if (stepDown !== null) {
@@ -59,11 +71,13 @@ function init() {
     rig.update(dt)
     beacons.update(elapsed)
     interaction.update(dt)
+    hint.update(dt, rig.userActive() || hud.openId() !== null)
     telemetry.setActiveNode(hud.openId())
     telemetry.update(dt, elapsed)
   })
 
   sceneCtx.start()
+  document.getElementById('fallback')!.classList.add('hidden')
   const sources = [withCache(githubSource)]
   for (const source of sources) {
     source
@@ -77,7 +91,6 @@ function init() {
         telemetry.setLinkStatus('down')
       })
   }
-  document.getElementById('fallback')!.classList.add('hidden')
 }
 
 try {

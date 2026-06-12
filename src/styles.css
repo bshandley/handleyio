@@ -25,9 +25,15 @@ body {
 
 #wordmark {
   position: fixed; left: 16px; bottom: 14px; z-index: 4;
-  font-size: 13px; letter-spacing: 2px; color: var(--hud-dim);
-  user-select: none;
+  letter-spacing: 2px; color: var(--hud-dim);
+  user-select: none; text-transform: uppercase; line-height: 1.8;
+  /* Never intercept taps meant for the canvas or HUD controls (BRA-68);
+     only the selectable bio line keeps pointer events. */
+  pointer-events: none;
 }
+#wordmark .id-site { font-size: 13px; }
+#wordmark .id-name { font-size: 12px; letter-spacing: 2px; color: var(--hud-fg); }
+#wordmark .id-line { font-size: 10px; letter-spacing: 1.5px; user-select: text; pointer-events: auto; }
 
 /* Visually hidden but focusable keyboard targets */
 #node-tabs button {
@@ -56,6 +62,7 @@ body {
 }
 #fallback.hidden { display: none; }
 #fallback h1 { font-size: 18px; letter-spacing: 4px; font-weight: 400; }
+#fallback .fallback-id { font-size: 12px; letter-spacing: 2px; color: var(--hud-dim); }
 #fallback ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
 
 .glass-card {
@@ -113,7 +120,7 @@ body {
 .hud-tele-tl { top: 14px; left: 16px; }
 .hud-tele-tr { top: 14px; right: 16px; text-align: right; }
 .hud-tele-br { bottom: 14px; right: 16px; text-align: right; }
-.hud-tele-bl { bottom: 36px; left: 16px; }
+.hud-tele-bl { bottom: 84px; left: 16px; }
 
 .hud-corner {
   position: fixed; z-index: 4; width: 18px; height: 18px; pointer-events: none;
@@ -136,9 +143,18 @@ body {
   box-shadow: 0 0 28px rgba(80, 150, 255, 0.12), inset 0 0 28px rgba(80, 150, 255, 0.08);
 }
 
-@media (max-width: 640px) {
-  .hud-tele-tr, .hud-tele-br { display: none; }
+/* First-visit hint, typed beneath the reticle */
+.hud-hint {
+  position: fixed; z-index: 4; left: 50%; top: calc(50% + 13vh);
+  transform: translateX(-50%); text-align: center;
+  pointer-events: none; user-select: none;
+  font-size: 11px; letter-spacing: 2px; line-height: 2;
+  color: var(--hud-accent); text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(140, 192, 255, 0.35);
+  opacity: 0; transition: opacity 0.3s ease;
 }
+.hud-hint.open { opacity: 1; }
+.hud-reticle.hint { border-color: rgba(140, 192, 255, 0.45); }
 
 /* Chevron node navigation */
 .hud-nodenav {
@@ -159,4 +175,33 @@ body {
   color: #fff; border-color: rgba(140, 190, 255, 0.7);
   background: rgba(120, 180, 255, 0.18);
   outline: none;
+}
+
+/* Small viewports. Keep this block last: it overrides base rules above. */
+@media (max-width: 640px) {
+  .hud-tele-tr, .hud-tele-br { display: none; }
+  /* Phones (BRA-68): centered chevrons would sit under the wrapped bio line.
+     Move them to the bottom-right thumb zone and wrap the wordmark clear of
+     them; lift the status line above the now-taller wordmark. */
+  .hud-nodenav { left: auto; right: 16px; transform: none; gap: 12px; }
+  #wordmark { max-width: calc(100vw - 148px); }
+  .hud-tele-bl { bottom: 122px; }
+
+  /* BRA-69: hint wraps into 5 ragged lines over the galaxy core at phone widths.
+     Shrink font and spacing; constrain width to yield a clean 2-3 line wrap. */
+  .hud-hint {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    max-width: 80vw;
+  }
+}
+
+/* Landscape phones: hint top anchor sits uncomfortably high in short viewports. */
+@media (max-height: 500px) and (max-width: 896px) {
+  .hud-hint {
+    top: calc(50% + 8vh);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    max-width: 80vw;
+  }
 }

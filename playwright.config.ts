@@ -9,7 +9,9 @@ export default defineConfig({
   },
   use: { baseURL: 'http://localhost:4173' },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /mobile/ },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'] }, testIgnore: /mobile/ },
+    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] }, testMatch: /mobile/ },
+    { name: 'mobile-webkit', use: { ...devices['iPhone 13'] }, testMatch: /mobile/ },
   ],
 })

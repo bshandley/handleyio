@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { withCache, type DataSource, type NodeData } from '../src/data/source'
+import { withCache, safeStorage, type DataSource, type NodeData } from '../src/data/source'
 
 function fakeStorage() {
   const m = new Map<string, string>()
@@ -39,5 +39,43 @@ describe('withCache', () => {
     storage.setItem('nodedata:github', '{not json')
     const cached = withCache(source(async () => ({ lines: ['a'] })), storage, () => 0)
     expect(await cached.fetchData()).toEqual({ lines: ['a'] })
+  })
+})
+
+describe('withCache storage failures', () => {
+  it('a setItem quota error still returns the fresh fetch', async () => {
+    const storage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('QuotaExceededError')
+      },
+    }
+    const source = withCache(
+      { id: 'x', ttlMs: 1000, fetchData: async () => ({ lines: ['fresh'] }) },
+      storage,
+      () => 0,
+    )
+    await expect(source.fetchData()).resolves.toEqual({ lines: ['fresh'] })
+  })
+})
+
+describe('safeStorage', () => {
+  it('falls back to in-memory storage when localStorage is unusable', () => {
+    const orig = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+    Object.defineProperty(globalThis, 'localStorage', {
+      get() {
+        throw new Error('blocked')
+      },
+      configurable: true,
+    })
+    try {
+      const s = safeStorage()
+      s.setItem('k', 'v')
+      expect(s.getItem('k')).toBe('v')
+      expect(s.getItem('missing')).toBeNull()
+    } finally {
+      if (orig) Object.defineProperty(globalThis, 'localStorage', orig)
+      else delete (globalThis as Record<string, unknown>).localStorage
+    }
   })
 })

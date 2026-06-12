@@ -38,7 +38,7 @@ export const NODES: GalaxyNode[] = [
     label: 'LINKEDIN',
     designation: 'NODE 03 · LI-OUTPOST',
     position: [-0.8, 0.3, -3.0],
-    lines: ['Bradley Handley'],
+    lines: ['Bradley Handley', 'Cloud security leader'],
     actions: [
       { label: 'Open ↗', kind: 'open', href: 'https://www.linkedin.com/in/bshandley/' },
     ],

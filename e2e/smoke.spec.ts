@@ -25,8 +25,7 @@ test('renders the galaxy and hides the fallback', async ({ page }) => {
   await expect(page.locator('#fallback')).toBeHidden()
   const frames = async () => page.evaluate(() => window.__frameCount ?? 0)
   const before = await frames()
-  await page.waitForTimeout(500)
-  expect(await frames()).toBeGreaterThan(before)
+  await expect.poll(frames, { timeout: 5000 }).toBeGreaterThan(before)
 })
 
 test('keyboard opens each node panel', async ({ page }) => {
@@ -82,6 +81,15 @@ test('a stationary press does not open a panel', async ({ page }) => {
   await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
 })
 
+test('clicking a beacon opens its panel', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  const pos = await page.evaluate(() => window.__nodeScreen!('github'))
+  await page.mouse.click(pos.x, pos.y)
+  await expect(page.locator('.hud-panel')).toHaveClass(/open/)
+  await expect(page.locator('.hud-title')).toHaveText('GITHUB')
+})
+
 test('fallback shows when webgl is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext
@@ -97,4 +105,33 @@ test('fallback shows when webgl is unavailable', async ({ page }) => {
     'href',
     'https://github.com/bshandley',
   )
+})
+
+test('identity and meta are present', async ({ page }) => {
+  await page.goto('/')
+  await expect(page).toHaveTitle('Bradley Handley · handley.io')
+  await expect(page.locator('#wordmark .id-name')).toHaveText('Bradley Handley')
+  await expect(page.locator('#wordmark .id-line')).toContainText('Perpetually tired')
+  expect(await page.locator('meta[property="og:image"]').getAttribute('content')).toBe(
+    'https://handley.io/og.png',
+  )
+  const ld = JSON.parse(await page.locator('script[type="application/ld+json"]').innerText())
+  expect(ld['@type']).toBe('Person')
+  expect(ld.name).toBe('Bradley Handley')
+})
+
+test('first-visit hint shows once and never returns', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.hud-hint')).toHaveClass(/open/, { timeout: 5000 })
+  await expect(page.locator('.hud-hint')).toContainText('MANUAL CONTROL', { timeout: 5000 })
+  // a real drag dismisses it
+  await page.mouse.move(600, 300)
+  await page.mouse.down()
+  await page.mouse.move(680, 300, { steps: 5 })
+  await page.mouse.up()
+  await expect(page.locator('.hud-hint')).not.toBeAttached({ timeout: 2000 })
+  // reload: flag set, hint stays away
+  await page.reload()
+  await page.waitForTimeout(3500)
+  await expect(page.locator('.hud-hint')).not.toBeAttached()
 })
