@@ -114,3 +114,88 @@ describe('panelstate: cross-mode seams', () => {
     expect(visibleId(s)).toBeNull() // email must not resurrect
   })
 })
+
+describe('panelstate: click and pin', () => {
+  it('click pins the panel; it survives idle frames', () => {
+    const s = initialState()
+    fire(s, { type: 'click', id: 'email' })
+    runFrames(s, 600, {})
+    expect(visibleId(s)).toBe('email')
+  })
+
+  it('hovering another node shows it, then the pin restores', () => {
+    const s = initialState()
+    fire(s, { type: 'click', id: 'email' })
+    runFrames(s, 2, { hitId: 'github' })
+    expect(visibleId(s)).toBe('github')
+    runFrames(s, 1, {})
+    expect(visibleId(s)).toBe('email') // immediate restore, no grace
+  })
+
+  it('escape closes a pinned panel', () => {
+    const s = initialState()
+    fire(s, { type: 'pin', id: 'email' })
+    fire(s, { type: 'escape' })
+    expect(visibleId(s)).toBeNull()
+  })
+
+  it('empty click closes a pinned panel', () => {
+    const s = initialState()
+    fire(s, { type: 'click', id: 'email' })
+    fire(s, { type: 'clickEmpty' })
+    expect(visibleId(s)).toBeNull()
+  })
+
+  it('clear dismisses like escape (chevron flight start)', () => {
+    const s = initialState()
+    fire(s, { type: 'pin', id: 'email' })
+    fire(s, { type: 'clear' })
+    expect(visibleId(s)).toBeNull()
+  })
+})
+
+describe('panelstate: focus mode', () => {
+  it('opens when the user centers a node', () => {
+    const s = initialState()
+    // the userActive=false half of this gate is pinned by the next test
+    runFrames(s, 2, { focusId: 'pliny', userActive: true })
+    expect(visibleId(s)).toBe('pliny')
+  })
+
+  it('never opens without user activity', () => {
+    const s = initialState()
+    runFrames(s, 3600, { focusId: 'pliny', userActive: false })
+    expect(visibleId(s)).toBeNull()
+  })
+
+  it('stays open while the node is centered after activity decays', () => {
+    const s = initialState()
+    runFrames(s, 2, { focusId: 'pliny', userActive: true })
+    runFrames(s, 600, { focusId: 'pliny', userActive: false })
+    expect(visibleId(s)).toBe('pliny')
+  })
+
+  it('closes after grace when the node leaves the zone', () => {
+    const s = initialState()
+    runFrames(s, 2, { focusId: 'pliny', userActive: true })
+    runFrames(s, Math.ceil(CLOSE_GRACE / (1 / 60)) + 2, {})
+    expect(visibleId(s)).toBeNull()
+  })
+
+  it('does not hold an unrelated lingering panel open (v1 quirk, normalized)', () => {
+    const s = initialState()
+    runFrames(s, 2, { hitId: 'github' })
+    // github hover ends, pliny dwells in the zone without user activity
+    runFrames(s, Math.ceil(CLOSE_GRACE / (1 / 60)) + 2, { focusId: 'pliny' })
+    expect(visibleId(s)).toBeNull()
+  })
+
+  it('a focus panel is not held by a different node entering the zone', () => {
+    const s = initialState()
+    runFrames(s, 2, { focusId: 'github', userActive: true })
+    expect(visibleId(s)).toBe('github')
+    // github leaves; pliny dwells in the zone with no user activity
+    runFrames(s, Math.ceil(CLOSE_GRACE / DT) + 2, { focusId: 'pliny' })
+    expect(visibleId(s)).toBeNull()
+  })
+})
