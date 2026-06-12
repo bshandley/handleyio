@@ -199,3 +199,49 @@ describe('panelstate: focus mode', () => {
     expect(visibleId(s)).toBeNull()
   })
 })
+
+describe('panelstate: production regressions', () => {
+  it('BRA-61: a dismissed node cannot focus-reopen during its whole dwell', () => {
+    const s = initialState()
+    // user rotates pliny to center, focus opens
+    runFrames(s, 5, { focusId: 'pliny', userActive: true })
+    expect(visibleId(s)).toBe('pliny')
+    // user clicks empty space to dismiss while pliny is still centered
+    step(s, frame({ focusId: 'pliny', userActive: true, events: [{ type: 'clickEmpty' }] }))
+    // pliny dwells in the zone for 60 simulated seconds, user stays active
+    runFrames(s, 3600, { focusId: 'pliny', userActive: true })
+    expect(visibleId(s)).toBeNull()
+    // pliny leaves the zone, then comes back with the user active: reopens
+    runFrames(s, 120, { userActive: true })
+    runFrames(s, 5, { focusId: 'pliny', userActive: true })
+    expect(visibleId(s)).toBe('pliny')
+  })
+
+  it('BRA-62: page load with a node in the zone and idle drift never opens', () => {
+    const s = initialState()
+    // wide-aspect load: pliny sits in the zone from frame zero, no user input
+    runFrames(s, 18000, { focusId: 'pliny', userActive: false }) // 5 sim-minutes
+    expect(visibleId(s)).toBeNull()
+  })
+
+  it('BRA-63: a stationary press-release (empty click) opens nothing', () => {
+    const s = initialState()
+    runFrames(s, 60, { focusId: 'pliny' })
+    // stationary click on empty space: no pointer travel, so never userActive
+    step(s, frame({ focusId: 'pliny', events: [{ type: 'clickEmpty' }] }))
+    runFrames(s, 600, { focusId: 'pliny', userActive: false })
+    expect(visibleId(s)).toBeNull()
+  })
+
+  it('chevron flight: dismissal suppresses nodes sweeping the center', () => {
+    const s = initialState()
+    fire(s, { type: 'clear' }) // flight start closes any panel
+    // during the 1s sweep window other nodes transit the zone; the camera
+    // motion is not user-driven, and even if it were, suppression holds
+    runFrames(s, 30, { focusId: 'email', userActive: true }) // 0.5s
+    expect(visibleId(s)).toBeNull()
+    // arrival pins the target
+    fire(s, { type: 'pin', id: 'github' })
+    expect(visibleId(s)).toBe('github')
+  })
+})
