@@ -73,6 +73,7 @@ function init() {
   })
 
   sceneCtx.start()
+  document.getElementById('fallback')!.classList.add('hidden')
   const sources = [withCache(githubSource)]
   for (const source of sources) {
     source
@@ -86,7 +87,6 @@ function init() {
         telemetry.setLinkStatus('down')
       })
   }
-  document.getElementById('fallback')!.classList.add('hidden')
 }
 
 try {

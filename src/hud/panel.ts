@@ -67,8 +67,12 @@ export function createHud(root: HTMLElement, leaderSvg: SVGSVGElement): Hud {
     b.className = 'hud-action'
     b.textContent = action.label
     b.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(action.text)
-      b.textContent = 'Copied ✓'
+      try {
+        await navigator.clipboard.writeText(action.text)
+        b.textContent = 'Copied ✓'
+      } catch {
+        b.textContent = 'Copy failed'
+      }
       setTimeout(() => (b.textContent = action.label), 1500)
     })
     return b
