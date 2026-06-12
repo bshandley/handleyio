@@ -27,10 +27,13 @@ body {
   position: fixed; left: 16px; bottom: 14px; z-index: 4;
   letter-spacing: 2px; color: var(--hud-dim);
   user-select: none; text-transform: uppercase; line-height: 1.8;
+  /* Never intercept taps meant for the canvas or HUD controls (BRA-68);
+     only the selectable bio line keeps pointer events. */
+  pointer-events: none;
 }
 #wordmark .id-site { font-size: 13px; }
 #wordmark .id-name { font-size: 12px; letter-spacing: 2px; color: var(--hud-fg); }
-#wordmark .id-line { font-size: 10px; letter-spacing: 1.5px; user-select: text; }
+#wordmark .id-line { font-size: 10px; letter-spacing: 1.5px; user-select: text; pointer-events: auto; }
 
 /* Visually hidden but focusable keyboard targets */
 #node-tabs button {
@@ -140,10 +143,6 @@ body {
   box-shadow: 0 0 28px rgba(80, 150, 255, 0.12), inset 0 0 28px rgba(80, 150, 255, 0.08);
 }
 
-@media (max-width: 640px) {
-  .hud-tele-tr, .hud-tele-br { display: none; }
-}
-
 /* First-visit hint, typed beneath the reticle */
 .hud-hint {
   position: fixed; z-index: 4; left: 50%; top: calc(50% + 13vh);
@@ -176,4 +175,15 @@ body {
   color: #fff; border-color: rgba(140, 190, 255, 0.7);
   background: rgba(120, 180, 255, 0.18);
   outline: none;
+}
+
+/* Small viewports. Keep this block last: it overrides base rules above. */
+@media (max-width: 640px) {
+  .hud-tele-tr, .hud-tele-br { display: none; }
+  /* Phones (BRA-68): centered chevrons would sit under the wrapped bio line.
+     Move them to the bottom-right thumb zone and wrap the wordmark clear of
+     them; lift the status line above the now-taller wordmark. */
+  .hud-nodenav { left: auto; right: 16px; transform: none; gap: 12px; }
+  #wordmark { max-width: calc(100vw - 148px); }
+  .hud-tele-bl { bottom: 122px; }
 }
