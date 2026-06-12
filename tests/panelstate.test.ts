@@ -244,4 +244,11 @@ describe('panelstate: production regressions', () => {
     fire(s, { type: 'pin', id: 'github' })
     expect(visibleId(s)).toBe('github')
   })
+
+  it('clear and pin in the same frame resolve in order (reduced-motion chevron)', () => {
+    const s = initialState()
+    fire(s, { type: 'pin', id: 'email' })
+    fire(s, { type: 'clear' }, { type: 'pin', id: 'github' })
+    expect(visibleId(s)).toBe('github')
+  })
 })
