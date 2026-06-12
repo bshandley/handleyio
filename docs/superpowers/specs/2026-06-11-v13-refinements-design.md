@@ -183,5 +183,57 @@ milestone close.
 
 ## Deviations accepted during the build
 
-(Recorded here as they are found; state machine behavioral deltas land in
-this section for review.)
+State machine (workstream A):
+
+- step(state, inputs) mutates the state in place and returns void, not a
+  new state. The render loop's zero-per-frame-allocation rule makes a
+  fresh object per frame wrong; mode objects are allocated only on
+  transitions.
+- The spec's input list had pointerOnCanvas; it is folded into hitId
+  (null when the pointer is off canvas).
+- hover's returnTo carries the prior Mode object, not a pin id (review
+  finding: a pin-id-only design lost the focus hold when the pointer
+  brushed the focused beacon). Step 4 also refuses to restore a focus
+  mode whose node has left the zone (a stale restore would flash a
+  departed node's panel).
+- v1 quirks normalized, each pinned by a test: a node dwelling in the
+  focus zone no longer holds an unrelated lingering panel open (neither
+  a hover-lingering panel nor a focus panel for a different node); the
+  pointer leaving the canvas with a pin set restores the pinned panel
+  immediately (v1 left the stale hover panel up); the pointer resting on
+  a hovered panel keeps that panel (v1's restore raced it in one path).
+- pin(), clear(), keyboard focus, and Escape apply on the next frame
+  (one event-queue hop, at most ~16ms) instead of synchronously.
+- A dismissal samples the focused node at frame time, not event time;
+  the 1s sweep timer covers the gap.
+
+Hint (workstream C):
+
+- A chevron press dismisses the hint when the flight arrives and pins
+  the target (hud.openId() flips), not at the press itself. The hint can
+  stay visible for the ~1s flight.
+- A returning visitor's hint element is removed on the first frame
+  rather than left hidden in the DOM.
+
+Identity and meta (workstream B):
+
+- The bio line is selectable (user-select: text) while the rest of the
+  wordmark block ignores the pointer entirely (pointer-events: none,
+  also load-bearing for BRA-68).
+- The no-WebGL fallback gained a name/role line under its h1 so a
+  no-WebGL visitor still learns who the site belongs to.
+
+Mobile (workstream D), from the audit (see
+docs/superpowers/audits/2026-06-12-mobile-audit.md):
+
+- At widths <= 640px the chevrons move to the bottom-right thumb zone,
+  the wordmark is width-capped to wrap clear of them (BRA-68), the
+  bottom-left telemetry rises to clear the taller block, and the hint
+  shrinks to 9px with a width cap (BRA-69). Short viewports anchor the
+  hint lower.
+
+CI:
+
+- Action versions landed at checkout@v6, setup-node@v6,
+  upload-pages-artifact@v5, deploy-pages@v5 (the plan's template guessed
+  one major lower; the plan's own step said to take the latest).
