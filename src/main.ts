@@ -6,7 +6,8 @@ import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
 import { createScene, hasWebgl } from './scene'
 import { wireInteraction } from './interaction'
-import { withCache } from './data/source'
+import { createHint, HintModel } from './hud/hint'
+import { safeStorage, withCache } from './data/source'
 import { githubSource } from './data/github'
 import { FpsGovernor, pickInitialCount } from './quality'
 
@@ -59,6 +60,8 @@ function init() {
     }
   }
 
+  const hint = createHint(document.getElementById('hud')!, new HintModel(safeStorage()))
+
   sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)
     if (stepDown !== null) {
@@ -68,6 +71,7 @@ function init() {
     rig.update(dt)
     beacons.update(elapsed)
     interaction.update(dt)
+    hint.update(dt, rig.userActive() || hud.openId() !== null)
     telemetry.setActiveNode(hud.openId())
     telemetry.update(dt, elapsed)
   })

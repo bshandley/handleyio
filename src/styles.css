@@ -144,6 +144,19 @@ body {
   .hud-tele-tr, .hud-tele-br { display: none; }
 }
 
+/* First-visit hint, typed beneath the reticle */
+.hud-hint {
+  position: fixed; z-index: 4; left: 50%; top: calc(50% + 13vh);
+  transform: translateX(-50%); text-align: center;
+  pointer-events: none; user-select: none;
+  font-size: 11px; letter-spacing: 2px; line-height: 2;
+  color: var(--hud-accent); text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(140, 192, 255, 0.35);
+  opacity: 0; transition: opacity 0.3s ease;
+}
+.hud-hint.open { opacity: 1; }
+.hud-reticle.hint { border-color: rgba(140, 192, 255, 0.45); }
+
 /* Chevron node navigation */
 .hud-nodenav {
   position: fixed; z-index: 4; left: 50%; bottom: 18px;

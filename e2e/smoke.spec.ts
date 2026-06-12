@@ -119,3 +119,19 @@ test('identity and meta are present', async ({ page }) => {
   expect(ld['@type']).toBe('Person')
   expect(ld.name).toBe('Bradley Handley')
 })
+
+test('first-visit hint shows once and never returns', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.hud-hint')).toHaveClass(/open/, { timeout: 5000 })
+  await expect(page.locator('.hud-hint')).toContainText('MANUAL CONTROL', { timeout: 5000 })
+  // a real drag dismisses it
+  await page.mouse.move(600, 300)
+  await page.mouse.down()
+  await page.mouse.move(680, 300, { steps: 5 })
+  await page.mouse.up()
+  await expect(page.locator('.hud-hint')).not.toBeAttached({ timeout: 2000 })
+  // reload: flag set, hint stays away
+  await page.reload()
+  await page.waitForTimeout(3500)
+  await expect(page.locator('.hud-hint')).not.toBeAttached()
+})
