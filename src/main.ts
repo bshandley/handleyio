@@ -50,6 +50,15 @@ function init() {
     interaction.clear,
   )
 
+  // e2e hook: screen-space position of a beacon (test-only, allocates)
+  window.__nodeScreen = (id: string) => {
+    const v = beacons.worldPosition(id).clone().project(sceneCtx.camera)
+    return {
+      x: ((v.x + 1) / 2) * innerWidth,
+      y: ((1 - v.y) / 2) * innerHeight,
+    }
+  }
+
   sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)
     if (stepDown !== null) {

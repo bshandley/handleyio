@@ -98,5 +98,6 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
 declare global {
   interface Window {
     __frameCount?: number
+    __nodeScreen?: (id: string) => { x: number; y: number }
   }
 }

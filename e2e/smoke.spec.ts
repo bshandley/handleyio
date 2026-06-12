@@ -81,6 +81,15 @@ test('a stationary press does not open a panel', async ({ page }) => {
   await expect(page.locator('.hud-panel')).not.toHaveClass(/open/)
 })
 
+test('clicking a beacon opens its panel', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  const pos = await page.evaluate(() => window.__nodeScreen!('github'))
+  await page.mouse.click(pos.x, pos.y)
+  await expect(page.locator('.hud-panel')).toHaveClass(/open/)
+  await expect(page.locator('.hud-title')).toHaveText('GITHUB')
+})
+
 test('fallback shows when webgl is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext
