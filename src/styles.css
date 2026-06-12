@@ -186,4 +186,22 @@ body {
   .hud-nodenav { left: auto; right: 16px; transform: none; gap: 12px; }
   #wordmark { max-width: calc(100vw - 148px); }
   .hud-tele-bl { bottom: 122px; }
+
+  /* BRA-69: hint wraps into 5 ragged lines over the galaxy core at phone widths.
+     Shrink font and spacing; constrain width to yield a clean 2-3 line wrap. */
+  .hud-hint {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    max-width: 80vw;
+  }
+}
+
+/* Landscape phones: hint top anchor sits uncomfortably high in short viewports. */
+@media (max-height: 500px) and (max-width: 896px) {
+  .hud-hint {
+    top: calc(50% + 8vh);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    max-width: 80vw;
+  }
 }
