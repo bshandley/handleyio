@@ -42,7 +42,8 @@ jobs:
       - run: npm ci
       # webkit pre-installed for the v1.3 mobile-emulation task (playwright.config.ts gains mobile projects there)
       - run: npx playwright install --with-deps chromium firefox webkit
-      - run: npm run e2e
+      # xvfb: headless Firefox needs a display for (software) WebGL on runners
+      - run: xvfb-run --auto-servernum -- npm run e2e
 
   deploy:
     needs: [build, e2e]
