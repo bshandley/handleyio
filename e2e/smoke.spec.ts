@@ -25,8 +25,7 @@ test('renders the galaxy and hides the fallback', async ({ page }) => {
   await expect(page.locator('#fallback')).toBeHidden()
   const frames = async () => page.evaluate(() => window.__frameCount ?? 0)
   const before = await frames()
-  await page.waitForTimeout(500)
-  expect(await frames()).toBeGreaterThan(before)
+  await expect.poll(frames, { timeout: 5000 }).toBeGreaterThan(before)
 })
 
 test('keyboard opens each node panel', async ({ page }) => {
