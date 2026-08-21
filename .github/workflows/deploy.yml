@@ -26,9 +26,12 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: cp -r public/.well-known dist/.well-known
-      - run: find dist -name '*.well-known*' -o -name 'server' -o -name 'client' | head -20
-      - run: ls -la dist/.well-known/matrix/
+      - name: Ensure .well-known in dist
+        run: |
+          mkdir -p dist/.well-known/matrix
+          cp public/.well-known/matrix/server dist/.well-known/matrix/server
+          cp public/.well-known/matrix/client dist/.well-known/matrix/client
+      - run: ls -laR dist/.well-known
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
