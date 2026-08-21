@@ -31,16 +31,18 @@ jobs:
           mkdir -p dist/.well-known/matrix
           echo '{"m.server":"matrix.handley.io:443"}' > dist/.well-known/matrix/server
           echo '{"m.homeserver":{"base_url":"https://matrix.handley.io"}}' > dist/.well-known/matrix/client
-      - run: find dist -type f | sort
-      - name: Create tar with dotfiles
+      - name: Create pages artifact with dotfiles
         run: |
-          cd dist && tar --dereference -czf /tmp/github-pages.tar.gz . && cd ..
+          cd dist
+          tar --dereference -czf /tmp/github-pages.tar.gz .
+          echo "Archive contents:"
           tar -tzf /tmp/github-pages.tar.gz | sort
       - name: Upload pages artifact
         uses: actions/upload-artifact@v7
         with:
           name: github-pages
           path: /tmp/github-pages.tar.gz
+          archive: false
           if-no-files-found: error
 
   e2e:
