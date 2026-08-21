@@ -26,20 +26,21 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - name: Stage artifact with .well-known
+      - name: Create .well-known in dist
         run: |
-          rm -rf artifact-staging
-          mkdir -p artifact-staging
-          cp -r dist/* artifact-staging/
-          mkdir -p artifact-staging/.well-known/matrix
-          echo '{"m.server":"matrix.handley.io:443"}' > artifact-staging/.well-known/matrix/server
-          echo '{"m.homeserver":{"base_url":"https://matrix.handley.io"}}' > artifact-staging/.well-known/matrix/client
-      - run: find artifact-staging -type f | sort
-      - uses: actions/upload-artifact@v7
+          mkdir -p dist/.well-known/matrix
+          echo '{"m.server":"matrix.handley.io:443"}' > dist/.well-known/matrix/server
+          echo '{"m.homeserver":{"base_url":"https://matrix.handley.io"}}' > dist/.well-known/matrix/client
+      - run: find dist -type f | sort
+      - name: Create tar with dotfiles
+        run: |
+          cd dist && tar --dereference -czf /tmp/github-pages.tar.gz . && cd ..
+          tar -tzf /tmp/github-pages.tar.gz | sort
+      - name: Upload pages artifact
+        uses: actions/upload-artifact@v7
         with:
           name: github-pages
-          path: artifact-staging/
-          include-hidden-files: true
+          path: /tmp/github-pages.tar.gz
           if-no-files-found: error
 
   e2e:
