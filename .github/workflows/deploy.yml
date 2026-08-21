@@ -26,12 +26,12 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - name: Ensure .well-known in dist
+      - name: Copy .well-known to dist
         run: |
           mkdir -p dist/.well-known/matrix
-          cp public/.well-known/matrix/server dist/.well-known/matrix/server
-          cp public/.well-known/matrix/client dist/.well-known/matrix/client
-      - run: ls -laR dist/.well-known
+          echo '{"m.server":"matrix.handley.io:443"}' > dist/.well-known/matrix/server
+          echo '{"m.homeserver":{"base_url":"https://matrix.handley.io"}}' > dist/.well-known/matrix/client
+      - run: find dist/.well-known -type f
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
