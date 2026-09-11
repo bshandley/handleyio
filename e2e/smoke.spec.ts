@@ -135,3 +135,32 @@ test('first-visit hint shows once and never returns', async ({ page }) => {
   await page.waitForTimeout(3500)
   await expect(page.locator('.hud-hint')).not.toBeAttached()
 })
+
+test('renders through the direct path when float targets are unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = WebGL2RenderingContext.prototype.getExtension
+    WebGL2RenderingContext.prototype.getExtension = function (name: string) {
+      if (name === 'EXT_color_buffer_float' || name === 'EXT_color_buffer_half_float') return null
+      return original.call(this, name)
+    }
+  })
+  await page.goto('/')
+  await expect(page.locator('#fallback')).toBeHidden()
+  expect(await page.evaluate(() => window.__renderPath)).toBe('direct')
+  const frames = async () => page.evaluate(() => window.__frameCount ?? 0)
+  const before = await frames()
+  await expect.poll(frames, { timeout: 5000 }).toBeGreaterThan(before)
+})
+
+test('telemetry draw count covers the whole frame on the hdr path', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  const path = await page.evaluate(() => window.__renderPath)
+  test.skip(path !== 'hdr', 'software GL without float color buffers')
+  const drawCount = async () => {
+    const text = await page.locator('.hud-tele-tr .hud-tele-line').nth(2).textContent()
+    return Number((text ?? '').replace(/\D/g, ''))
+  }
+  // pre-change scene was 7 draw calls; the composer's passes push it well past that
+  await expect.poll(drawCount, { timeout: 5000 }).toBeGreaterThan(7)
+})

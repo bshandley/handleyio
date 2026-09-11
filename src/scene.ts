@@ -2,12 +2,14 @@ import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { createArmModel } from './galaxy/arms'
 import { createGalaxy, type Galaxy } from './galaxy/galaxy'
 import { createStarfield } from './galaxy/starfield'
+import { createPost, type PostChain } from './render/post'
 
 export interface GalaxyScene {
   scene: Scene
   camera: PerspectiveCamera
   renderer: WebGLRenderer
   galaxy: Galaxy
+  post: PostChain
   onFrame(cb: (dt: number, elapsed: number) => void): void
   start(): void
 }
@@ -30,11 +32,17 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
   renderer.setSize(innerWidth, innerHeight)
   container.appendChild(renderer.domElement)
+  // Telemetry reads info.render.calls once per frame; with a post chain each
+  // pass would otherwise reset it, leaving only the last pass's count.
+  renderer.info.autoReset = false
 
   const model = createArmModel()
   const galaxy = createGalaxy(model, { count: particleCount }, renderer.getPixelRatio())
   scene.add(galaxy.group)
   scene.add(createStarfield())
+
+  const post = createPost(renderer, scene, camera, innerWidth, innerHeight)
+  window.__renderPath = post.path
 
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
   const clock = new Clock()
@@ -66,7 +74,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight
     camera.updateProjectionMatrix()
-    renderer.setSize(innerWidth, innerHeight)
+    post.setSize(innerWidth, innerHeight, renderer.getPixelRatio())
   })
 
   document.addEventListener('visibilitychange', () => {
@@ -84,7 +92,8 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
     }
     galaxy.setCameraSide(camera.position.y >= 0)
     for (const cb of frameCbs) cb(dt, elapsed)
-    renderer.render(scene, camera)
+    renderer.info.reset()
+    post.render()
     window.__frameCount = (window.__frameCount ?? 0) + 1
   }
 
@@ -93,6 +102,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
     camera,
     renderer,
     galaxy,
+    post,
     onFrame: (cb) => void frameCbs.push(cb),
     start: tick,
   }
@@ -102,5 +112,6 @@ declare global {
   interface Window {
     __frameCount?: number
     __nodeScreen?: (id: string) => { x: number; y: number }
+    __renderPath?: 'hdr' | 'direct'
   }
 }
