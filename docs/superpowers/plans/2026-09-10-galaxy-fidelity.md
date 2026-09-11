@@ -2958,6 +2958,8 @@ Adjust only these constants; write the final value into this table and into the 
 | `GLOW_INTENSITY` | src/galaxy/glow.ts | 1.0 | 0.8 |
 | `DUST_DEFAULTS.count / laneOffset / laneFraction / sizeMin / sizeMax` | src/galaxy/dust.ts | 2500 / 0.18 / 0.7 / 0.2 / 0.6 | unchanged |
 | `DUST_ABSORB`, `DUST_TINT` | src/galaxy/dust.ts | 0.85, [0.55, 0.78, 1.0] | 0.65, tint unchanged |
+| `FADE_START` (added in Task 10d) | src/galaxy/dust.ts | none | 0.04 |
+| `FADE_FULL` (added in Task 10d) | src/galaxy/dust.ts | none | 0.18 |
 | `BRIGHT_GIANT_CUTOFF` (round-one lever) | src/galaxy/generate.ts | 0.8 | 0.995 |
 | `ARM_FLOOR` / `ARM_EXPONENT` (round-two levers, inline literals until round two named them) | src/galaxy/generate.ts | 0.12 / 1.7 | 0.12 (unchanged) / 0.9 |
 | `GLOW_FLOOR` / `GLOW_EXPONENT` (round-two levers, inline literals until round two named them) | src/galaxy/glow.ts | 0.12 / 1.4 | 0.12 (unchanged) / 0.9 |

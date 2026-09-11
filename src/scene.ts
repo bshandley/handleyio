@@ -1,7 +1,7 @@
 import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { createArmModel } from './galaxy/arms'
 import { createDeepField } from './galaxy/deepfield'
-import { createDust } from './galaxy/dust'
+import { createDust, dustFade } from './galaxy/dust'
 import { createGalaxy, type Galaxy } from './galaxy/galaxy'
 import { createGlow } from './galaxy/glow'
 import { createStarfield } from './galaxy/starfield'
@@ -131,6 +131,7 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
       setTime(elapsed)
     }
     galaxy.setCameraSide(camera.position.y >= 0)
+    dust.setFade(dustFade(camera.position.y / camera.position.length()))
     for (const cb of frameCbs) cb(dt, elapsed)
     renderer.info.reset()
     post.render()

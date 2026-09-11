@@ -20,7 +20,7 @@ import {
   setInstanceFraction,
   type BillboardBuffers,
 } from './billboard'
-import { lerp, makeGauss } from './math'
+import { clamp01, lerp, makeGauss } from './math'
 import { renderCloudCell } from './noise'
 import { RENDER_ORDER } from './order'
 
@@ -58,7 +58,25 @@ export const DUST_ABSORB = 0.65
 /** Per-channel absorption: red passes most, blue least, so lanes read brown. */
 export const DUST_TINT: [number, number, number] = [0.55, 0.78, 1.0]
 
+// Below this |sine of camera elevation| the dust has no effect at all.
+export const FADE_START = 0.04
+// At and above this |sine of camera elevation| the dust is at full strength.
+export const FADE_FULL = 0.18
+
 const ATLAS_CELLS = 4
+
+/**
+ * Fades dust absorption to zero near the galactic plane. The far/near star
+ * split swaps at y = 0 in a single frame (setCameraSide); with dust at full
+ * strength near the plane that swap darkens a different half of the stars
+ * each side of the crossing and reads as a flash. Fading absorption out
+ * before the crossing makes the swap invisible at the cost of the lanes
+ * near edge-on views, which the y-split cannot render correctly anyway.
+ */
+export function dustFade(sinElevation: number): number {
+  const t = clamp01((Math.abs(sinElevation) - FADE_START) / (FADE_FULL - FADE_START))
+  return t * t * (3 - 2 * t)
+}
 
 export function generateDust(
   p: DustParams,
@@ -130,6 +148,7 @@ const dustFragment = /* glsl */ `
 uniform sampler2D uAtlas;
 uniform float uAbsorb;
 uniform vec3 uTint;
+uniform float uFade;
 varying vec2 vUv;
 varying float vAlpha;
 varying float vShape;
@@ -137,7 +156,7 @@ varying float vShape;
 void main() {
   vec2 cell = vec2(mod(vShape, 2.0), floor(vShape / 2.0));
   float mask = texture2D(uAtlas, (vUv + cell) * 0.5).r;
-  float a = mask * vAlpha * uAbsorb;
+  float a = mask * vAlpha * uAbsorb * uFade;
   // transmission per channel; the framebuffer is multiplied by this
   gl_FragColor = vec4(1.0 - a * uTint, 1.0);
 }
@@ -149,6 +168,7 @@ export interface DustLayer {
   /** Drawing-buffer pixels. */
   setViewport(width: number, height: number): void
   setFraction(fraction: number): void
+  setFade(fade: number): void
   dispose(): void
 }
 
@@ -166,6 +186,7 @@ export function createDust(
     uAtlas: { value: atlas },
     uAbsorb: { value: DUST_ABSORB },
     uTint: { value: new Vector3(...DUST_TINT) },
+    uFade: { value: 1 },
   }
   const material = new ShaderMaterial({
     vertexShader: billboardVertex,
@@ -197,6 +218,9 @@ export function createDust(
     },
     setFraction(fraction) {
       setInstanceFraction(geometry, fraction)
+    },
+    setFade(fade) {
+      uniforms.uFade.value = fade
     },
     dispose() {
       geometry.dispose()

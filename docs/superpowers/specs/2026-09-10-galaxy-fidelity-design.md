@@ -305,7 +305,14 @@ a screenshot of the old renderer.
 - Spikes: `BRIGHT_GIANT_CUTOFF` moved to the value in the table so only a
   few dozen disc stars carry diffraction spikes (the spec's "top few
   percent" read as a Christmas tree).
-- winding check pending, controller to fill in.
+- Winding check: after roughly 280 s of additional sim time (SIM-T
+  +0439s, headless capture wind-600.png) the inner disc inside r of about 2
+  reads as concentric rings while the outer arms still read as two arms.
+  Shipped as-is; the density-wave orbit follow-up remains the fix.
 - `scripts/capture-og.mjs` now pins `?level=0` and stubs the GitHub API.
   The first-visit hint did not appear in the capture window, so no
   hint-seen flag was needed.
+- Dust absorption fades to zero within about ten degrees of an edge-on
+  camera (`dustFade` in dust.ts); the far/near star swap at the plane
+  crossing otherwise flashed the darkened half from top to bottom (found by
+  Bradley on real hardware).
