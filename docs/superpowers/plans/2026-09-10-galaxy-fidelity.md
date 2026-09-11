@@ -2682,7 +2682,9 @@ export function pickInitialLevel(
   height: number,
   cores: number,
   coarsePointer: boolean,
+  softwareGl = false,
 ): number {
+  if (softwareGl) return LADDER.length - 1
   const pixels = width * height
   if (!coarsePointer && pixels >= 1_500_000 && cores >= 8) return 0
   if (pixels >= 700_000 && cores >= 4) return 3

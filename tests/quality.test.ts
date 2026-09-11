@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { FpsGovernor, LADDER, parseLevelParam, pickInitialLevel } from '../src/quality'
+import {
+  FpsGovernor,
+  isSoftwareRenderer,
+  LADDER,
+  parseLevelParam,
+  pickInitialLevel,
+} from '../src/quality'
 
 describe('LADDER', () => {
   it('is ordered from most to least expensive, each step dropping something', () => {
@@ -49,6 +55,30 @@ describe('pickInitialLevel', () => {
   })
   it('gives mid devices the 40k rung', () => {
     expect(LADDER[pickInitialLevel(1024, 768, 4, false)].stars).toBe(40_000)
+  })
+  it('starts a software renderer at the ladder floor regardless of specs', () => {
+    expect(pickInitialLevel(2560, 1440, 10, false, true)).toBe(LADDER.length - 1)
+  })
+})
+
+describe('isSoftwareRenderer', () => {
+  it('flags known software renderer strings', () => {
+    expect(
+      isSoftwareRenderer(
+        'ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)',
+      ),
+    ).toBe(true)
+    expect(isSoftwareRenderer('llvmpipe (LLVM 15.0.7, 256 bits)')).toBe(true)
+    expect(isSoftwareRenderer('Microsoft Basic Render Driver')).toBe(true)
+  })
+
+  it('does not flag real GPU renderer strings', () => {
+    expect(
+      isSoftwareRenderer('ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)'),
+    ).toBe(false)
+    expect(isSoftwareRenderer('Mesa Intel(R) UHD Graphics 620 (KBL GT2)')).toBe(false)
+    expect(isSoftwareRenderer(null)).toBe(false)
+    expect(isSoftwareRenderer('')).toBe(false)
   })
 })
 

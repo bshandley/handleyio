@@ -324,3 +324,8 @@ a screenshot of the old renderer.
   main.ts instead of the frame-capped dt; the heavier scene lowered CI's
   software-GL frame rate enough that the capped clock stretched the delay
   past the e2e test's window.
+- Software renderers (SwiftShader, llvmpipe, softpipe, Microsoft Basic
+  Render) start at the ladder floor via `isSoftwareRenderer` on the probed
+  WebGL renderer string, and the governor's sustain window is wall-clock;
+  CI's llvmpipe rendered the level-3 scene at about one frame per second,
+  starving the hint's typewriter timer and the chevron flight.

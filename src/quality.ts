@@ -23,13 +23,33 @@ export const LADDER: readonly QualityLevel[] = [
 const LOW_FPS = 28
 const SUSTAIN_SECONDS = 3
 
-/** Index into LADDER. Coarse pointers (phones, tablets) never start with bloom. */
+const SOFTWARE_RENDERER_MARKERS = ['swiftshader', 'llvmpipe', 'softpipe', 'software', 'basic render']
+
+/**
+ * True when a WebGL renderer string names a software rasterizer
+ * (SwiftShader, llvmpipe, softpipe, Microsoft Basic Render Driver). Does
+ * not match "mesa" alone: real Linux GPU drivers report "Mesa Intel(R) ...".
+ */
+export function isSoftwareRenderer(name: string | null | undefined): boolean {
+  if (!name) return false
+  const lower = name.toLowerCase()
+  return SOFTWARE_RENDERER_MARKERS.some((marker) => lower.includes(marker))
+}
+
+/**
+ * Index into LADDER. Coarse pointers (phones, tablets) never start with
+ * bloom. Software renderers (no real GPU behind the WebGL context) start at
+ * the ladder floor before any other rule: a software rasterizer cannot
+ * carry even the mid-tier star counts at a usable frame rate.
+ */
 export function pickInitialLevel(
   width: number,
   height: number,
   cores: number,
   coarsePointer: boolean,
+  softwareGl = false,
 ): number {
+  if (softwareGl) return LADDER.length - 1
   const pixels = width * height
   if (!coarsePointer && pixels >= 1_500_000 && cores >= 8) return 0
   if (pixels >= 700_000 && cores >= 4) return 3

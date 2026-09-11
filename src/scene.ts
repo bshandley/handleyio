@@ -20,12 +20,28 @@ export interface GalaxyScene {
   start(): void
 }
 
-export function hasWebgl(): boolean {
+/**
+ * Probes WebGL support and the renderer string behind it, so callers can
+ * tell a software rasterizer (CI's llvmpipe, headless SwiftShader) from a
+ * real GPU before picking a quality level.
+ */
+export function probeGl(): { ok: boolean; renderer: string } {
   try {
     const canvas = document.createElement('canvas')
-    return Boolean(canvas.getContext('webgl2') ?? canvas.getContext('webgl'))
+    const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
+    if (!gl) return { ok: false, renderer: '' }
+    let renderer = ''
+    try {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info')
+      renderer = String(
+        ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+      )
+    } catch {
+      renderer = ''
+    }
+    return { ok: true, renderer }
   } catch {
-    return false
+    return { ok: false, renderer: '' }
   }
 }
 

@@ -5,15 +5,16 @@ import { createNodeNav } from './hud/nodenav'
 import { createTelemetry } from './hud/telemetry'
 import { createBeacons } from './nodes/beacons'
 import { NODES } from './nodes/registry'
-import { createScene, hasWebgl } from './scene'
+import { createScene, probeGl } from './scene'
 import { wireInteraction } from './interaction'
 import { createHint, HintModel } from './hud/hint'
 import { safeStorage, withCache } from './data/source'
 import { githubSource } from './data/github'
-import { FpsGovernor, LADDER, parseLevelParam, pickInitialLevel } from './quality'
+import { FpsGovernor, isSoftwareRenderer, LADDER, parseLevelParam, pickInitialLevel } from './quality'
 
 function init() {
-  if (!hasWebgl()) return
+  const gl = probeGl()
+  if (!gl.ok) return
 
   const app = document.getElementById('app')!
   // ?level=N pins a quality level for tuning and screenshots; the governor
@@ -26,6 +27,7 @@ function init() {
       innerHeight,
       navigator.hardwareConcurrency ?? 4,
       matchMedia('(pointer: coarse)').matches,
+      isSoftwareRenderer(gl.renderer),
     )
   const sceneCtx = createScene(app, LADDER[levelIndex])
   const governor = new FpsGovernor(levelIndex)
@@ -74,13 +76,18 @@ function init() {
 
   const hint = createHint(document.getElementById('hud')!, new HintModel(safeStorage()))
 
-  // The hint's delay is wall-clock: the render loop's dt is capped per frame,
-  // which would stretch a 2 s delay into many seconds at low frame rates
-  // (CI software GL). Capped at 1 s so a resumed tab does not jump the hint.
-  let hintClock = performance.now()
+  // Both the hint's delay and the governor's sustain window are wall-clock
+  // for the same reason: the render loop's dt is capped per frame, which
+  // would stretch a 2 s delay (and a 3 s sustain window) into many seconds
+  // at low frame rates (CI software GL). Capped at 1 s so a resumed tab
+  // does not jump either one.
+  let wallClock = performance.now()
 
   sceneCtx.onFrame((dt, elapsed) => {
-    const stepDown = pinned === null ? governor.update(dt) : null
+    const now = performance.now()
+    const wallDt = Math.min((now - wallClock) / 1000, 1)
+    wallClock = now
+    const stepDown = pinned === null ? governor.update(wallDt) : null
     if (stepDown !== null) {
       sceneCtx.applyLevel(LADDER[stepDown])
       telemetry.setParticles(LADDER[stepDown].stars)
@@ -88,10 +95,7 @@ function init() {
     rig.update(dt)
     beacons.update(elapsed)
     interaction.update(dt)
-    const now = performance.now()
-    const hintDt = Math.min((now - hintClock) / 1000, 1)
-    hintClock = now
-    hint.update(hintDt, rig.userActive() || hud.openId() !== null)
+    hint.update(wallDt, rig.userActive() || hud.openId() !== null)
     telemetry.setActiveNode(hud.openId())
     telemetry.update(dt, elapsed)
   })
