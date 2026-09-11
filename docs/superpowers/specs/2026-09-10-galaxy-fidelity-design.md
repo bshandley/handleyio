@@ -280,4 +280,32 @@ a screenshot of the old renderer.
 
 ## Deviations accepted during the build
 
-(Recorded here as they happen.)
+- Starfield and deep field are two modules added to the scene separately;
+  the spec's "returns a Group containing both" was dropped as needless.
+- Dust uses `CustomBlending` (`ZeroFactor`, `SrcColorFactor`) rather than
+  three's `MultiplyBlending`, which in 0.184 requires premultiplied alpha
+  and folds alpha into the result.
+- The beacon halo CanvasTexture is tagged `SRGBColorSpace` and its gradient
+  stops were steepened (`src/nodes/beacons.ts`): the HDR OutputPass
+  double-encoded the untagged texture and flattened the halos into discs.
+- `?level=N` pins a quality level and bypasses the governor
+  (`parseLevelParam` in `src/quality.ts`); a tuning and screenshot aid, not
+  a user-facing setting.
+- `GLOW_DEFAULTS.bulgeAlphaScale` gives bulge glow instances their own
+  alpha; the spec's single glow alpha could not keep the core below AgX's
+  shoulder.
+- Glow instance count is 5000 at the top level (spec said 2000 to 4000);
+  11000 halved the frame rate on CI's software GL and timed out the hint
+  e2e test, so haze density is bought with sprite size, not count.
+- Glow sprite size (`sizeMin`/`sizeMax`) ended at 0.12 to 0.36 world units,
+  below the spec's 0.3 to 1.0 starting range: at 1.0 units a single sprite
+  covered about 106px on a 1600x900 frame, reading as a discrete grey
+  puff rather than haze. Dust count, dust size, and bloom threshold stayed
+  inside their spec ranges; deep field count (40) was never tuned.
+- Spikes: `BRIGHT_GIANT_CUTOFF` moved to the value in the table so only a
+  few dozen disc stars carry diffraction spikes (the spec's "top few
+  percent" read as a Christmas tree).
+- winding check pending, controller to fill in.
+- `scripts/capture-og.mjs` now pins `?level=0` and stubs the GitHub API.
+  The first-visit hint did not appear in the capture window, so no
+  hint-seen flag was needed.
