@@ -1,29 +1,55 @@
+import type { ArmModel } from './arms'
+import { clamp01, lerp, makeGauss } from './math'
+
+export type Rgb = [number, number, number]
+/** Radial color stops at t = 0, 1/3, 2/3, 1. */
+export type Palette = [Rgb, Rgb, Rgb, Rgb]
+
+// Stops sit well below 1 at the warm end: the bulge and inner disc pile up
+// additively, and AgX washes anything that lands near its shoulder to cream.
+export const PALETTE: Palette = [
+  [0.85, 0.68, 0.42], // old gold bulge
+  [0.88, 0.78, 0.62], // warm white inner disc
+  [0.82, 0.88, 1.0], // blue-white
+  [0.5, 0.62, 1.0], // blue edge
+]
+
 export interface GalaxyParams {
   count: number
-  arms: number
   radius: number
-  spin: number
   thickness: number
-  coreColor: [number, number, number]
-  midColor: [number, number, number]
-  edgeColor: [number, number, number]
+  /** In-plane sigma of the bulge ellipsoid (world units). */
+  bulgeRadius: number
+  /** y sigma as a fraction of bulgeRadius. */
+  bulgeFlatten: number
+  /** Share of count placed in the bulge. */
+  bulgeFraction: number
+  palette: Palette
 }
 
 export const GALAXY_DEFAULTS: GalaxyParams = {
   count: 60_000,
-  arms: 4,
   radius: 4.5,
-  spin: 1.1,
   thickness: 0.35,
-  coreColor: [1.0, 0.85, 0.6],
-  midColor: [0.85, 0.7, 0.95],
-  edgeColor: [0.45, 0.55, 1.0],
+  bulgeRadius: 0.55,
+  bulgeFlatten: 0.6,
+  bulgeFraction: 0.09,
+  palette: PALETTE,
 }
 
-// Differential rotation curve. The galaxy vertex shader inlines the same
-// constants (see shaders.ts); keep them in sync.
+// Differential rotation curve. The GLSL orbitChunk in shaders.ts inlines the
+// same constants; keep them in sync.
 export function orbitalSpeed(radius: number): number {
   return 0.0875 / (0.3 + radius)
+}
+
+export function paletteAt(palette: Palette, t: number): Rgb {
+  const x = clamp01(t) * 3
+  const i = Math.min(2, Math.floor(x))
+  const f = x - i
+  const a = palette[i]
+  const b = palette[i + 1]
+  return [lerp(a[0], b[0], f), lerp(a[1], b[1], f), lerp(a[2], b[2], f)]
 }
 
 export interface GalaxyBuffers {
@@ -32,83 +58,93 @@ export interface GalaxyBuffers {
   y: Float32Array
   color: Float32Array
   size: Float32Array
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t
-}
-
-function clamp01(v: number): number {
-  return Math.min(1, Math.max(0, v))
+  /** 1 for bright giants drawn with diffraction spikes, else 0. */
+  spike: Float32Array
+  /** Buffers are sorted by y; entries [0, splitIndex) have y < 0. */
+  splitIndex: number
 }
 
 // Population mix, tuned by eye against the preview
 const CLUMP_FRACTION = 0.15 // star-forming clusters along the arms
 const FIELD_FRACTION = 0.08 // unstructured disc/halo stars
-const DUST_CHANCE = 0.08
-const BRIGHT_GIANT_CUTOFF = 0.8 // of the size power law; ~5% of stars
+const BRIGHT_GIANT_CUTOFF = 0.995 // of the size power law; ~0.13% of disc stars
+
+// Disc radial law: r = (ARM_FLOOR + (1 - ARM_FLOOR) * rand^ARM_EXPONENT) * radius.
+// An exponent above 1 piles stars just outside the floor, and that pile-up is
+// what clipped the inner disc to a flat cream slab. Below 1 the density tapers
+// into the bulge instead and the outer arms keep their population.
+const ARM_FLOOR = 0.12
+const ARM_EXPONENT = 0.9
 
 export function generateGalaxy(
   p: GalaxyParams,
+  model: ArmModel,
   rand: () => number = Math.random,
 ): GalaxyBuffers {
-  const radius = new Float32Array(p.count)
-  const angle = new Float32Array(p.count)
-  const y = new Float32Array(p.count)
-  const color = new Float32Array(p.count * 3)
-  const size = new Float32Array(p.count)
+  const n = p.count
+  const radius = new Float32Array(n)
+  const angle = new Float32Array(n)
+  const y = new Float32Array(n)
+  const color = new Float32Array(n * 3)
+  const size = new Float32Array(n)
+  const spike = new Float32Array(n)
+  const gauss = makeGauss(rand)
+  const arms = model.params.arms
 
-  const gauss = () => rand() + rand() + rand() - 1.5 // approx normal, sd ~0.5
-
-  // Star-forming clumps seeded along the arms
-  const clusterCount = Math.max(8, Math.round(p.count / 1500))
+  // Star-forming clumps seeded along the arm ridges
+  const clusterCount = Math.max(8, Math.round(n / 1500))
   const clusters: Array<{ r: number; a: number; y: number }> = []
   for (let c = 0; c < clusterCount; c++) {
     const r = (0.25 + 0.75 * Math.pow(rand(), 1.5)) * p.radius
-    const arm = c % p.arms
-    const a = (arm / p.arms) * Math.PI * 2 + r * p.spin + gauss() * 0.18
-    clusters.push({ r, a, y: gauss() * p.thickness * 0.4 })
+    clusters.push({
+      r,
+      a: model.ridgeAngle(c % arms, r) + gauss() * 0.12,
+      y: gauss() * p.thickness * 0.4,
+    })
   }
 
-  for (let i = 0; i < p.count; i++) {
+  for (let i = 0; i < n; i++) {
+    const roll = rand()
+    const inBulge = roll < p.bulgeFraction
+    const inClump = !inBulge && roll < p.bulgeFraction + CLUMP_FRACTION
+    const inField = !inBulge && !inClump && roll < p.bulgeFraction + CLUMP_FRACTION + FIELD_FRACTION
     let r: number
     let a: number
     let yy: number
-    const roll = rand()
-    const inClump = roll < CLUMP_FRACTION
 
-    if (inClump) {
+    if (inBulge) {
+      // old population: gaussian ellipsoid, flattened in y
+      const gx = gauss() * 2 * p.bulgeRadius
+      const gz = gauss() * 2 * p.bulgeRadius
+      r = Math.hypot(gx, gz)
+      a = Math.atan2(gz, gx)
+      yy = gauss() * 2 * p.bulgeRadius * p.bulgeFlatten
+    } else if (inClump) {
       const c = clusters[Math.floor(rand() * clusters.length)]
       r = c.r + gauss() * 0.18
       a = c.a + (gauss() * 0.12) / Math.max(0.4, c.r * 0.5)
       yy = c.y + gauss() * p.thickness * 0.25
-    } else if (roll < CLUMP_FRACTION + FIELD_FRACTION) {
+    } else if (inField) {
       r = Math.sqrt(rand()) * p.radius
       a = rand() * Math.PI * 2
       yy = gauss() * p.thickness * (1.6 - r / p.radius)
     } else {
-      r = Math.pow(rand(), 2.0) * p.radius
+      // arm population, kept out of the bulge core
+      r = (ARM_FLOOR + (1 - ARM_FLOOR) * Math.pow(rand(), ARM_EXPONENT)) * p.radius
       const t = r / p.radius
-      const arm = i % p.arms
-      const armAngle = (arm / p.arms) * Math.PI * 2
-      const wobble = 0.12 * Math.sin(r * 3.1 + arm * 1.9)
-      a = armAngle + r * p.spin + wobble + gauss() * (0.18 + t * 0.55)
+      a = model.sample(i % arms, r, t, rand, gauss)
       yy = gauss() * p.thickness * (1.0 - 0.75 * t)
     }
 
     // fuzzy edge: gaussian radial jitter, stronger outward, soft cap at 1.2x
-    r += gauss() * 0.15 * (0.3 + r / p.radius)
+    if (!inBulge) r += gauss() * 0.15 * (0.3 + r / p.radius)
     r = Math.min(1.2 * p.radius, Math.max(0, r))
     const t = Math.min(1, r / p.radius)
     radius[i] = r
     angle[i] = a
     y[i] = yy
 
-    const [c0, c1] = t < 0.5 ? [p.coreColor, p.midColor] : [p.midColor, p.edgeColor]
-    const tt = t < 0.5 ? t * 2 : (t - 0.5) * 2
-    let cr = lerp(c0[0], c1[0], tt)
-    let cg = lerp(c0[1], c1[1], tt)
-    let cb = lerp(c0[2], c1[2], tt)
+    let [cr, cg, cb] = inBulge ? p.palette[0] : paletteAt(p.palette, t)
 
     // per-star temperature shift along a blackbody-ish warm/cool axis:
     // green moves with red (toward yellow-white) so nothing turns magenta
@@ -124,18 +160,54 @@ export function generateGalaxy(
     }
 
     const jitter = 0.8 + rand() * 0.3
-    const dust = rand() < DUST_CHANCE ? 0.3 : 1.0
 
     // power-law sizes: mostly small, a handful of bright giants that wash
-    // evenly toward white
-    const s = Math.pow(rand(), 4)
-    size[i] = (0.6 + s * 4.5) * (t < 0.15 ? 1.4 : 1.0)
-    const brighten = s > BRIGHT_GIANT_CUTOFF ? 1.4 : 1.0
+    // evenly toward white. The bulge is an old population with no giants.
+    const s = Math.pow(rand(), inBulge ? 6 : 4)
+    const giant = !inBulge && s > BRIGHT_GIANT_CUTOFF
+    size[i] = (0.6 + s * 4.5) * (inBulge ? 1.2 : 1.0)
+    spike[i] = giant ? 1 : 0
+    const brighten = giant ? 1.4 : 1.0
 
-    color[i * 3] = clamp01(cr * jitter * dust * brighten)
-    color[i * 3 + 1] = clamp01(cg * jitter * dust * brighten)
-    color[i * 3 + 2] = clamp01(cb * jitter * dust * brighten)
+    color[i * 3] = clamp01(cr * jitter * brighten)
+    color[i * 3 + 1] = clamp01(cg * jitter * brighten)
+    color[i * 3 + 2] = clamp01(cb * jitter * brighten)
   }
 
-  return { radius, angle, y, color, size }
+  return sortByY({ radius, angle, y, color, size, spike })
+}
+
+// Sort every buffer by y so galaxy.ts can draw the below-plane half and the
+// above-plane half as two draw ranges around the dust layer.
+function sortByY(b: Omit<GalaxyBuffers, 'splitIndex'>): GalaxyBuffers {
+  const n = b.y.length
+  const order = new Uint32Array(n)
+  for (let i = 0; i < n; i++) order[i] = i
+  order.sort((i, j) => b.y[i] - b.y[j])
+
+  const permute = (src: Float32Array) => {
+    const out = new Float32Array(n)
+    for (let i = 0; i < n; i++) out[i] = src[order[i]]
+    return out
+  }
+  const color = new Float32Array(n * 3)
+  for (let i = 0; i < n; i++) {
+    const j = order[i]
+    color[i * 3] = b.color[j * 3]
+    color[i * 3 + 1] = b.color[j * 3 + 1]
+    color[i * 3 + 2] = b.color[j * 3 + 2]
+  }
+  const y = permute(b.y)
+  let splitIndex = 0
+  while (splitIndex < n && y[splitIndex] < 0) splitIndex++
+
+  return {
+    radius: permute(b.radius),
+    angle: permute(b.angle),
+    y,
+    color,
+    size: permute(b.size),
+    spike: permute(b.spike),
+    splitIndex,
+  }
 }
