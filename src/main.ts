@@ -10,15 +10,20 @@ import { wireInteraction } from './interaction'
 import { createHint, HintModel } from './hud/hint'
 import { safeStorage, withCache } from './data/source'
 import { githubSource } from './data/github'
-import { FpsGovernor, pickInitialCount } from './quality'
+import { FpsGovernor, LADDER, pickInitialLevel } from './quality'
 
 function init() {
   if (!hasWebgl()) return
 
   const app = document.getElementById('app')!
-  const count = pickInitialCount(innerWidth, innerHeight, navigator.hardwareConcurrency ?? 4)
-  const sceneCtx = createScene(app, count)
-  const governor = new FpsGovernor(count)
+  const levelIndex = pickInitialLevel(
+    innerWidth,
+    innerHeight,
+    navigator.hardwareConcurrency ?? 4,
+    matchMedia('(pointer: coarse)').matches,
+  )
+  const sceneCtx = createScene(app, LADDER[levelIndex])
+  const governor = new FpsGovernor(levelIndex)
   const rig = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
 
   const beacons = createBeacons(NODES)
@@ -43,7 +48,7 @@ function init() {
     sceneCtx.renderer,
     NODES.length,
   )
-  telemetry.setParticles(count)
+  telemetry.setParticles(LADDER[levelIndex].stars)
 
   createNodeNav(
     document.getElementById('hud')!,
@@ -67,8 +72,8 @@ function init() {
   sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = governor.update(dt)
     if (stepDown !== null) {
-      sceneCtx.galaxy.rebuild(stepDown)
-      telemetry.setParticles(stepDown)
+      sceneCtx.applyLevel(LADDER[stepDown])
+      telemetry.setParticles(LADDER[stepDown].stars)
     }
     rig.update(dt)
     beacons.update(elapsed)
