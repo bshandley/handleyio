@@ -1,5 +1,6 @@
 import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { createArmModel } from './galaxy/arms'
+import { createDeepField } from './galaxy/deepfield'
 import { createDust } from './galaxy/dust'
 import { createGalaxy, type Galaxy } from './galaxy/galaxy'
 import { createGlow } from './galaxy/glow'
@@ -46,7 +47,10 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   scene.add(glow.mesh)
   const dust = createDust(model, innerWidth * pr, innerHeight * pr)
   scene.add(dust.mesh)
-  scene.add(createStarfield())
+  const starfield = createStarfield(pr)
+  scene.add(starfield.points)
+  const deepField = createDeepField(innerWidth * pr, innerHeight * pr)
+  scene.add(deepField.mesh)
 
   const post = createPost(renderer, scene, camera, innerWidth, innerHeight)
   window.__renderPath = post.path
@@ -86,6 +90,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
     post.setSize(innerWidth, innerHeight, renderer.getPixelRatio())
     glow.setViewport(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio())
     dust.setViewport(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio())
+    deepField.setViewport(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio())
   })
 
   document.addEventListener('visibilitychange', () => {
