@@ -1334,8 +1334,15 @@ After the `createNodeNav(...)` call:
 Inside the `sceneCtx.onFrame` callback, after `interaction.update(dt)`:
 
 ```ts
-    hint.update(dt, rig.userActive() || hud.openId() !== null)
+    const now = performance.now()
+    const hintDt = Math.min((now - hintClock) / 1000, 1)
+    hintClock = now
+    hint.update(hintDt, rig.userActive() || hud.openId() !== null)
 ```
+
+(`hintClock` is wall time, not the frame loop's capped `dt`: a capped dt would
+stretch the hint's 2 s delay into many seconds at low frame rates. Declared
+as `let hintClock = performance.now()` alongside the `hint` creation.)
 
 (`rig.userActive()` covers drag and wheel; `hud.openId()` covers beacon tap, chevron arrival, and keyboard focus, all of which open a panel.)
 

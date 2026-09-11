@@ -320,3 +320,7 @@ a screenshot of the old renderer.
   camera (`dustFade` in dust.ts); the far/near star swap at the plane
   crossing otherwise flashed the darkened half from top to bottom (found by
   Bradley on real hardware).
+- The first-visit hint's 2 s delay is now clocked from performance.now() in
+  main.ts instead of the frame-capped dt; the heavier scene lowered CI's
+  software-GL frame rate enough that the capped clock stretched the delay
+  past the e2e test's window.

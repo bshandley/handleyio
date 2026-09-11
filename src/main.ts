@@ -74,6 +74,11 @@ function init() {
 
   const hint = createHint(document.getElementById('hud')!, new HintModel(safeStorage()))
 
+  // The hint's delay is wall-clock: the render loop's dt is capped per frame,
+  // which would stretch a 2 s delay into many seconds at low frame rates
+  // (CI software GL). Capped at 1 s so a resumed tab does not jump the hint.
+  let hintClock = performance.now()
+
   sceneCtx.onFrame((dt, elapsed) => {
     const stepDown = pinned === null ? governor.update(dt) : null
     if (stepDown !== null) {
@@ -83,7 +88,10 @@ function init() {
     rig.update(dt)
     beacons.update(elapsed)
     interaction.update(dt)
-    hint.update(dt, rig.userActive() || hud.openId() !== null)
+    const now = performance.now()
+    const hintDt = Math.min((now - hintClock) / 1000, 1)
+    hintClock = now
+    hint.update(hintDt, rig.userActive() || hud.openId() !== null)
     telemetry.setActiveNode(hud.openId())
     telemetry.update(dt, elapsed)
   })
