@@ -1,7 +1,7 @@
 # Galaxy visual fidelity: layered rendering and HDR
 
 Date: 2026-09-10
-Status: draft for review
+Status: approved
 Linear: milestone "Galaxy fidelity" under project handley.io (created at
 approval)
 
