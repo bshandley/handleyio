@@ -1,5 +1,6 @@
 import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { createArmModel } from './galaxy/arms'
+import { createDust } from './galaxy/dust'
 import { createGalaxy, type Galaxy } from './galaxy/galaxy'
 import { createGlow } from './galaxy/glow'
 import { createStarfield } from './galaxy/starfield'
@@ -43,6 +44,8 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   const pr = renderer.getPixelRatio()
   const glow = createGlow(model, innerWidth * pr, innerHeight * pr)
   scene.add(glow.mesh)
+  const dust = createDust(model, innerWidth * pr, innerHeight * pr)
+  scene.add(dust.mesh)
   scene.add(createStarfield())
 
   const post = createPost(renderer, scene, camera, innerWidth, innerHeight)
@@ -58,6 +61,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   let contextLost = false
   galaxy.setTime(elapsed)
   glow.setTime(elapsed)
+  dust.setTime(elapsed)
 
   renderer.domElement.addEventListener('webglcontextlost', (e) => {
     e.preventDefault()
@@ -81,6 +85,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
     camera.updateProjectionMatrix()
     post.setSize(innerWidth, innerHeight, renderer.getPixelRatio())
     glow.setViewport(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio())
+    dust.setViewport(innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio())
   })
 
   document.addEventListener('visibilitychange', () => {
@@ -96,6 +101,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
       elapsed += dt
       galaxy.setTime(elapsed)
       glow.setTime(elapsed)
+      dust.setTime(elapsed)
     }
     galaxy.setCameraSide(camera.position.y >= 0)
     for (const cb of frameCbs) cb(dt, elapsed)
