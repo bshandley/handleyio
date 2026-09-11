@@ -69,6 +69,13 @@ const CLUMP_FRACTION = 0.15 // star-forming clusters along the arms
 const FIELD_FRACTION = 0.08 // unstructured disc/halo stars
 const BRIGHT_GIANT_CUTOFF = 0.995 // of the size power law; ~0.13% of disc stars
 
+// Disc radial law: r = (ARM_FLOOR + (1 - ARM_FLOOR) * rand^ARM_EXPONENT) * radius.
+// An exponent above 1 piles stars just outside the floor, and that pile-up is
+// what clipped the inner disc to a flat cream slab. Below 1 the density tapers
+// into the bulge instead and the outer arms keep their population.
+const ARM_FLOOR = 0.12
+const ARM_EXPONENT = 0.9
+
 export function generateGalaxy(
   p: GalaxyParams,
   model: ArmModel,
@@ -123,7 +130,7 @@ export function generateGalaxy(
       yy = gauss() * p.thickness * (1.6 - r / p.radius)
     } else {
       // arm population, kept out of the bulge core
-      r = (0.12 + 0.88 * Math.pow(rand(), 1.7)) * p.radius
+      r = (ARM_FLOOR + (1 - ARM_FLOOR) * Math.pow(rand(), ARM_EXPONENT)) * p.radius
       const t = r / p.radius
       a = model.sample(i % arms, r, t, rand, gauss)
       yy = gauss() * p.thickness * (1.0 - 0.75 * t)

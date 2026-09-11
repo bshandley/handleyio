@@ -53,7 +53,9 @@ describe('generateGalaxy', () => {
   it('populates a bulge at the center', () => {
     let inner = 0
     for (const r of g.radius) if (r < GALAXY_DEFAULTS.bulgeRadius) inner++
-    expect(inner / g.radius.length).toBeGreaterThan(0.05)
+    // A disc of uniform surface density would put (0.55 / 4.5)^2 = 1.5% of its
+    // stars inside bulgeRadius, so anything past 3% is a real concentration.
+    expect(inner / g.radius.length).toBeGreaterThan(0.03)
   })
 
   it('flags a small minority of stars as spiked giants', () => {

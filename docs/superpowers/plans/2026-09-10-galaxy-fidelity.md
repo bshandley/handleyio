@@ -2959,6 +2959,8 @@ Adjust only these constants; write the final value into this table and into the 
 | `DUST_DEFAULTS.count / laneOffset / laneFraction / sizeMin / sizeMax` | src/galaxy/dust.ts | 2500 / 0.18 / 0.7 / 0.2 / 0.6 | unchanged |
 | `DUST_ABSORB`, `DUST_TINT` | src/galaxy/dust.ts | 0.85, [0.55, 0.78, 1.0] | 0.65, tint unchanged |
 | `BRIGHT_GIANT_CUTOFF` (round-one lever) | src/galaxy/generate.ts | 0.8 | 0.995 |
+| `ARM_FLOOR` / `ARM_EXPONENT` (round-two levers, inline literals until round two named them) | src/galaxy/generate.ts | 0.12 / 1.7 | 0.12 (unchanged) / 0.9 |
+| `GLOW_FLOOR` / `GLOW_EXPONENT` (round-two levers, inline literals until round two named them) | src/galaxy/glow.ts | 0.12 / 1.4 | 0.12 (unchanged) / 0.9 |
 | `uNearFade` | src/galaxy/billboard.ts | 1.5 | unchanged |
 | `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.6 | unchanged |
 | deep field alpha range | src/galaxy/deepfield.ts | 0.15 to 0.35 | unchanged |
@@ -2969,6 +2971,26 @@ steeper gradient (the halos were rendering as flat pale discs), and
 `parseLevelParam` in `src/quality.ts` plus the `src/main.ts` wiring add
 `?level=N`, which pins a quality level and skips the governor so a capture
 shows the level it asks for.
+
+Round two changed only the two radial exponents. Both radial laws used an
+exponent above 1, which piles instances just outside the floor: 26% of the disc
+stars sat between r = 0.54 and r = 0.94, about 24 times the surface density of
+the rim, and additive accumulation there ran far past AgX's shoulder. That
+pile-up was the clipped cream oval, and its tangent points were the two bright
+vertical bands inside it. Exponents below 1 taper the density into the bulge
+instead and hand the difference to the outer arms, which removes both without
+touching brightness: the widest run of pixels over luminance 150 across the
+core falls from 175px to 31px at 1600x900, while the whole-frame mean
+luminance moves 15.76 to 15.67. The exponents are the only levers round two
+moved; exposure, intensities, palette, bloom and the bulge parameters stayed at
+their round-one values, which Bradley approved on real hardware.
+
+One unit bound moved with them: `tests/generate.test.ts` "populates a bulge at
+the center" counted stars inside `bulgeRadius` and wanted over 5%. That bound
+was only reachable because the old law's pile-up sat just outside the floor and
+the radial jitter pushed part of it inside 0.55. With the flatter law the share
+is 3.5%, still 2.3 times what a disc of uniform surface density would put
+there, so the bound is now 3%.
 
 Glow instance count is the expensive dimension on a software rasterizer: on
 headless Chromium each extra glow instance costs roughly 14 microseconds a

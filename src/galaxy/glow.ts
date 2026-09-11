@@ -47,6 +47,12 @@ export const GLOW_DEFAULTS: GlowParams = {
 
 export const GLOW_INTENSITY = 0.8
 
+// Haze radial law, matching the star law in generate.ts: an exponent above 1
+// piled sprites just outside the floor and clipped the inner disc, so this one
+// sits below 1 and the haze thins gently toward the bulge.
+const GLOW_FLOOR = 0.12
+const GLOW_EXPONENT = 0.9
+
 export function generateGlow(
   p: GlowParams,
   model: ArmModel,
@@ -70,7 +76,7 @@ export function generateGlow(
       yy = gauss() * 2 * p.bulgeRadius * 0.6
       color = p.palette[0]
     } else {
-      r = (0.12 + 0.88 * Math.pow(rand(), 1.4)) * p.radius
+      r = (GLOW_FLOOR + (1 - GLOW_FLOOR) * Math.pow(rand(), GLOW_EXPONENT)) * p.radius
       const t = r / p.radius
       a = model.sample(i % arms, r, t, rand, gauss)
       yy = gauss() * p.thickness * (1.0 - 0.6 * t)
