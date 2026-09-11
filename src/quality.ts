@@ -35,6 +35,19 @@ export function pickInitialLevel(
   return 3
 }
 
+/**
+ * Dev aid: `?level=N` pins a ladder index and disables the governor, so a
+ * screenshot shows the level it asks for. Returns null when the parameter is
+ * absent or not a number; otherwise an integer index clamped to the ladder.
+ */
+export function parseLevelParam(search: string): number | null {
+  const raw = new URLSearchParams(search).get('level')
+  if (raw === null || raw.trim() === '') return null
+  const value = Number(raw)
+  if (!Number.isFinite(value)) return null
+  return Math.min(LADDER.length - 1, Math.max(0, Math.floor(value)))
+}
+
 export class FpsGovernor {
   private belowFor = 0
   private level: number

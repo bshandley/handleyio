@@ -54,7 +54,7 @@ export const DUST_DEFAULTS: DustParams = {
 }
 
 /** Multiplier on the atlas mask; 1 is fully opaque at a filament's densest point. */
-export const DUST_ABSORB = 0.85
+export const DUST_ABSORB = 0.65
 /** Per-channel absorption: red passes most, blue least, so lanes read brown. */
 export const DUST_TINT: [number, number, number] = [0.55, 0.78, 1.0]
 

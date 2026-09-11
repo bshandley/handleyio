@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FpsGovernor, LADDER, pickInitialLevel } from '../src/quality'
+import { FpsGovernor, LADDER, parseLevelParam, pickInitialLevel } from '../src/quality'
 
 describe('LADDER', () => {
   it('is ordered from most to least expensive, each step dropping something', () => {
@@ -44,6 +44,27 @@ describe('pickInitialLevel', () => {
   })
   it('gives phones a reduced level', () => {
     expect(LADDER[pickInitialLevel(390, 844, 6, true)].stars).toBeLessThanOrEqual(25_000)
+  })
+})
+
+describe('parseLevelParam', () => {
+  it('returns null when the parameter is absent or not a number', () => {
+    expect(parseLevelParam('')).toBeNull()
+    expect(parseLevelParam('?foo=1')).toBeNull()
+    expect(parseLevelParam('?level=')).toBeNull()
+    expect(parseLevelParam('?level=high')).toBeNull()
+  })
+
+  it('returns the index for a value inside the ladder', () => {
+    expect(parseLevelParam('?level=0')).toBe(0)
+    expect(parseLevelParam('?level=2')).toBe(2)
+    expect(parseLevelParam('?debug=1&level=1')).toBe(1)
+  })
+
+  it('clamps out-of-range values to the ladder ends', () => {
+    expect(parseLevelParam('?level=99')).toBe(LADDER.length - 1)
+    expect(parseLevelParam('?level=-4')).toBe(0)
+    expect(parseLevelParam('?level=2.7')).toBe(2)
   })
 })
 

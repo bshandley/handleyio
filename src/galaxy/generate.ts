@@ -5,9 +5,11 @@ export type Rgb = [number, number, number]
 /** Radial color stops at t = 0, 1/3, 2/3, 1. */
 export type Palette = [Rgb, Rgb, Rgb, Rgb]
 
+// Stops sit well below 1 at the warm end: the bulge and inner disc pile up
+// additively, and AgX washes anything that lands near its shoulder to cream.
 export const PALETTE: Palette = [
-  [1.0, 0.82, 0.55], // old gold bulge
-  [1.0, 0.94, 0.85], // warm white inner disc
+  [0.85, 0.68, 0.42], // old gold bulge
+  [0.88, 0.78, 0.62], // warm white inner disc
   [0.82, 0.88, 1.0], // blue-white
   [0.5, 0.62, 1.0], // blue edge
 ]
@@ -31,7 +33,7 @@ export const GALAXY_DEFAULTS: GalaxyParams = {
   thickness: 0.35,
   bulgeRadius: 0.55,
   bulgeFlatten: 0.6,
-  bulgeFraction: 0.18,
+  bulgeFraction: 0.09,
   palette: PALETTE,
 }
 
@@ -65,7 +67,7 @@ export interface GalaxyBuffers {
 // Population mix, tuned by eye against the preview
 const CLUMP_FRACTION = 0.15 // star-forming clusters along the arms
 const FIELD_FRACTION = 0.08 // unstructured disc/halo stars
-const BRIGHT_GIANT_CUTOFF = 0.8 // of the size power law; ~5% of disc stars
+const BRIGHT_GIANT_CUTOFF = 0.995 // of the size power law; ~0.13% of disc stars
 
 export function generateGalaxy(
   p: GalaxyParams,

@@ -18,8 +18,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 export type RenderPath = 'hdr' | 'direct'
 
-export const EXPOSURE = 1.0
-export const BLOOM = { strength: 0.6, radius: 0.4, threshold: 1.0 }
+export const EXPOSURE = 0.85
+export const BLOOM = { strength: 0.3, radius: 0.3, threshold: 1.0 }
 export const VIGNETTE = 0.35
 
 export function hdrSupported(has: (name: string) => boolean): boolean {

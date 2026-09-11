@@ -13,7 +13,7 @@ import { generateGalaxy, GALAXY_DEFAULTS, type GalaxyParams } from './generate'
 import { RENDER_ORDER } from './order'
 import { galaxyFragment, galaxyVertex } from './shaders'
 
-export const STAR_INTENSITY = 0.75
+export const STAR_INTENSITY = 0.36
 const BASE_POINT_SIZE = 22
 
 export interface Galaxy {

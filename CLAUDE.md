@@ -18,7 +18,7 @@ GitHub commit data. Vite + vanilla TypeScript + Three.js, no framework.
 
 ## Commands
 
-- Dev: `npm run dev`
+- Dev: `npm run dev`; `?level=N` pins a quality level for tuning
 - Unit tests: `npm test` (Vitest, tests/ only)
 - E2E: `npm run e2e` (Playwright, Chromium + Firefox; first run needs
   `npx playwright install chromium firefox`)

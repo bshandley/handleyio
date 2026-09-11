@@ -12,9 +12,11 @@ import { PALETTE, paletteAt, type Palette } from './generate'
 import { lerp, makeGauss } from './math'
 import { RENDER_ORDER } from './order'
 
-// Unresolved light: a few thousand large, dim, soft sprites following the
+// Unresolved light: a few thousand small, dim, soft sprites following the
 // arm density, plus a warm bulge. This is what turns dots into arms; the
-// resolved stars are the sparkle on top.
+// resolved stars are the sparkle on top. Instance count is the expensive
+// dimension on a software rasterizer (CI), so haze density is bought with
+// smaller sprites rather than more of them.
 
 export interface GlowParams {
   count: number
@@ -25,22 +27,25 @@ export interface GlowParams {
   sizeMin: number
   sizeMax: number
   alpha: number
+  /** Bulge instances pile up on one another, so they carry a fraction of `alpha`. */
+  bulgeAlphaScale: number
   palette: Palette
 }
 
 export const GLOW_DEFAULTS: GlowParams = {
-  count: 3000,
+  count: 5000,
   radius: 4.5,
   thickness: 0.35,
   bulgeRadius: 0.55,
   bulgeFraction: 0.25,
-  sizeMin: 0.3,
-  sizeMax: 1.0,
-  alpha: 0.05,
+  sizeMin: 0.12,
+  sizeMax: 0.36,
+  alpha: 0.048,
+  bulgeAlphaScale: 0.2,
   palette: PALETTE,
 }
 
-export const GLOW_INTENSITY = 1.0
+export const GLOW_INTENSITY = 0.8
 
 export function generateGlow(
   p: GlowParams,
@@ -81,7 +86,7 @@ export function generateGlow(
     b.color[i * 3] = color[0]
     b.color[i * 3 + 1] = color[1]
     b.color[i * 3 + 2] = color[2]
-    b.alpha[i] = p.alpha * (0.7 + 0.6 * rand())
+    b.alpha[i] = p.alpha * (inBulge ? p.bulgeAlphaScale : 1.0) * (0.7 + 0.6 * rand())
   }
   return b
 }

@@ -10,18 +10,23 @@ import { wireInteraction } from './interaction'
 import { createHint, HintModel } from './hud/hint'
 import { safeStorage, withCache } from './data/source'
 import { githubSource } from './data/github'
-import { FpsGovernor, LADDER, pickInitialLevel } from './quality'
+import { FpsGovernor, LADDER, parseLevelParam, pickInitialLevel } from './quality'
 
 function init() {
   if (!hasWebgl()) return
 
   const app = document.getElementById('app')!
-  const levelIndex = pickInitialLevel(
-    innerWidth,
-    innerHeight,
-    navigator.hardwareConcurrency ?? 4,
-    matchMedia('(pointer: coarse)').matches,
-  )
+  // ?level=N pins a quality level for tuning and screenshots; the governor
+  // stays out of the way so the capture shows the level that was asked for.
+  const pinned = parseLevelParam(location.search)
+  const levelIndex =
+    pinned ??
+    pickInitialLevel(
+      innerWidth,
+      innerHeight,
+      navigator.hardwareConcurrency ?? 4,
+      matchMedia('(pointer: coarse)').matches,
+    )
   const sceneCtx = createScene(app, LADDER[levelIndex])
   const governor = new FpsGovernor(levelIndex)
   const rig = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
@@ -70,7 +75,7 @@ function init() {
   const hint = createHint(document.getElementById('hud')!, new HintModel(safeStorage()))
 
   sceneCtx.onFrame((dt, elapsed) => {
-    const stepDown = governor.update(dt)
+    const stepDown = pinned === null ? governor.update(dt) : null
     if (stepDown !== null) {
       sceneCtx.applyLevel(LADDER[stepDown])
       telemetry.setParticles(LADDER[stepDown].stars)

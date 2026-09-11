@@ -2945,21 +2945,37 @@ Adjust only these constants; write the final value into this table and into the 
 
 | Constant | File | Starting value | Final |
 |---|---|---|---|
-| `EXPOSURE` | src/render/post.ts | 1.0 | |
-| `BLOOM.strength / radius / threshold` | src/render/post.ts | 0.6 / 0.4 / 1.0 | |
-| `VIGNETTE` | src/render/post.ts | 0.35 | |
-| `STAR_INTENSITY` | src/galaxy/galaxy.ts | 0.75 | |
-| `BASE_POINT_SIZE` | src/galaxy/galaxy.ts | 22 | |
-| `ARM_DEFAULTS.spin / spread / spreadGrowth / spurSlope` | src/galaxy/arms.ts | 0.95 / 0.14 / 0.45 / 0.9 | |
-| `GALAXY_DEFAULTS.bulgeRadius / bulgeFraction` | src/galaxy/generate.ts | 0.55 / 0.18 | |
-| `PALETTE` | src/galaxy/generate.ts | see file | |
-| `GLOW_DEFAULTS.count / alpha / sizeMin / sizeMax` | src/galaxy/glow.ts | 3000 / 0.05 / 0.3 / 1.0 | |
-| `GLOW_INTENSITY` | src/galaxy/glow.ts | 1.0 | |
-| `DUST_DEFAULTS.count / laneOffset / laneFraction / sizeMin / sizeMax` | src/galaxy/dust.ts | 2500 / 0.18 / 0.7 / 0.2 / 0.6 | |
-| `DUST_ABSORB`, `DUST_TINT` | src/galaxy/dust.ts | 0.85, [0.55, 0.78, 1.0] | |
-| `uNearFade` | src/galaxy/billboard.ts | 1.5 | |
-| `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.6 | |
-| deep field alpha range | src/galaxy/deepfield.ts | 0.15 to 0.35 | |
+| `EXPOSURE` | src/render/post.ts | 1.0 | 0.85 |
+| `BLOOM.strength / radius / threshold` | src/render/post.ts | 0.6 / 0.4 / 1.0 | 0.3 / 0.3 / 1.0 |
+| `VIGNETTE` | src/render/post.ts | 0.35 | unchanged |
+| `STAR_INTENSITY` | src/galaxy/galaxy.ts | 0.75 | 0.36 |
+| `BASE_POINT_SIZE` | src/galaxy/galaxy.ts | 22 | unchanged |
+| `ARM_DEFAULTS.spin / spread / spreadGrowth / spurSlope` | src/galaxy/arms.ts | 0.95 / 0.14 / 0.45 / 0.9 | unchanged |
+| `GALAXY_DEFAULTS.bulgeRadius / bulgeFraction` | src/galaxy/generate.ts | 0.55 / 0.18 | 0.55 (unchanged) / 0.09 |
+| `PALETTE` | src/galaxy/generate.ts | see file | gold [0.85, 0.68, 0.42], inner disc [0.88, 0.78, 0.62]; blue-white and blue edge unchanged |
+| `GLOW_DEFAULTS.count / alpha / sizeMin / sizeMax` | src/galaxy/glow.ts | 3000 / 0.05 / 0.3 / 1.0 | 5000 / 0.048 / 0.12 / 0.36 |
+| `GLOW_DEFAULTS.bulgeAlphaScale` (added in round one) | src/galaxy/glow.ts | n/a (bulge shared `alpha`) | 0.2 |
+| `GLOW_INTENSITY` | src/galaxy/glow.ts | 1.0 | 0.8 |
+| `DUST_DEFAULTS.count / laneOffset / laneFraction / sizeMin / sizeMax` | src/galaxy/dust.ts | 2500 / 0.18 / 0.7 / 0.2 / 0.6 | unchanged |
+| `DUST_ABSORB`, `DUST_TINT` | src/galaxy/dust.ts | 0.85, [0.55, 0.78, 1.0] | 0.65, tint unchanged |
+| `BRIGHT_GIANT_CUTOFF` (round-one lever) | src/galaxy/generate.ts | 0.8 | 0.995 |
+| `uNearFade` | src/galaxy/billboard.ts | 1.5 | unchanged |
+| `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.6 | unchanged |
+| deep field alpha range | src/galaxy/deepfield.ts | 0.15 to 0.35 | unchanged |
+
+Round one also fixed two things outside the table: `haloTexture()` in
+`src/nodes/beacons.ts` now tags its CanvasTexture `SRGBColorSpace` and uses a
+steeper gradient (the halos were rendering as flat pale discs), and
+`parseLevelParam` in `src/quality.ts` plus the `src/main.ts` wiring add
+`?level=N`, which pins a quality level and skips the governor so a capture
+shows the level it asks for.
+
+Glow instance count is the expensive dimension on a software rasterizer: on
+headless Chromium each extra glow instance costs roughly 14 microseconds a
+frame, so 11000 instances halved the headless frame rate and the hint e2e
+test (which needs 2s of clamped frame dt inside a 5s timeout) went red. Haze
+density is therefore bought with smaller sprites at a similar count, not with
+more instances.
 
 - [ ] **Step 3: Beacon placement**
 
