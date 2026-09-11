@@ -2586,7 +2586,9 @@ describe('LADDER', () => {
 
   it('drops layer density before the star count falls below the second tier', () => {
     const firstStarDrop = LADDER.findIndex((l) => l.stars < LADDER[0].stars)
-    expect(LADDER[firstStarDrop].glow).toBeLessThan(1)
+    const priorRung = LADDER[firstStarDrop - 1]
+    expect(priorRung.stars).toBe(LADDER[0].stars)
+    expect(priorRung.glow).toBeLessThan(LADDER[0].glow)
   })
 })
 
@@ -2598,8 +2600,11 @@ describe('pickInitialLevel', () => {
     expect(LADDER[pickInitialLevel(2560, 1440, 10, true)].bloom).toBe(false)
     expect(LADDER[pickInitialLevel(390, 844, 6, true)].bloom).toBe(false)
   })
-  it('gives phones a reduced level', () => {
-    expect(LADDER[pickInitialLevel(390, 844, 6, true)].stars).toBeLessThanOrEqual(25_000)
+  it('gives phones the 25k rung', () => {
+    expect(LADDER[pickInitialLevel(390, 844, 6, true)].stars).toBe(25_000)
+  })
+  it('gives mid devices the 40k rung', () => {
+    expect(LADDER[pickInitialLevel(1024, 768, 4, false)].stars).toBe(40_000)
   })
 })
 
@@ -2662,7 +2667,8 @@ export interface QualityLevel {
 export const LADDER: readonly QualityLevel[] = [
   { stars: 60_000, glow: 1, dust: 1, bloom: true, pixelRatioCap: 2 },
   { stars: 60_000, glow: 1, dust: 1, bloom: false, pixelRatioCap: 2 },
-  { stars: 40_000, glow: 0.75, dust: 0.75, bloom: false, pixelRatioCap: 2 },
+  { stars: 60_000, glow: 0.5, dust: 0.5, bloom: false, pixelRatioCap: 2 },
+  { stars: 40_000, glow: 0.5, dust: 0.5, bloom: false, pixelRatioCap: 2 },
   { stars: 25_000, glow: 0.5, dust: 0.5, bloom: false, pixelRatioCap: 1.5 },
   { stars: 15_000, glow: 0, dust: 0, bloom: false, pixelRatioCap: 1 },
 ]
@@ -2679,8 +2685,8 @@ export function pickInitialLevel(
 ): number {
   const pixels = width * height
   if (!coarsePointer && pixels >= 1_500_000 && cores >= 8) return 0
-  if (pixels >= 700_000 && cores >= 4) return 2
-  return 3
+  if (pixels >= 700_000 && cores >= 4) return 3
+  return 4
 }
 
 export class FpsGovernor {
@@ -2709,7 +2715,7 @@ export class FpsGovernor {
 - [ ] **Step 4: Run the quality tests**
 
 Run: `npx vitest run tests/quality.test.ts`
-Expected: PASS, 10 tests.
+Expected: PASS, 11 tests.
 
 - [ ] **Step 5: Rewrite scene.ts in full**
 
@@ -2719,7 +2725,7 @@ Replace the full contents of `src/scene.ts` with (this consolidates the incremen
 import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { createArmModel } from './galaxy/arms'
 import { createDeepField } from './galaxy/deepfield'
-import { createDust } from './galaxy/dust'
+import { createDust, dustFade } from './galaxy/dust'
 import { createGalaxy, type Galaxy } from './galaxy/galaxy'
 import { createGlow } from './galaxy/glow'
 import { createStarfield } from './galaxy/starfield'
@@ -2849,6 +2855,7 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
       setTime(elapsed)
     }
     galaxy.setCameraSide(camera.position.y >= 0)
+    dust.setFade(dustFade(camera.position.y / camera.position.length()))
     for (const cb of frameCbs) cb(dt, elapsed)
     renderer.info.reset()
     post.render()

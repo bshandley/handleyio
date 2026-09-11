@@ -69,7 +69,8 @@ Post chain, when float render targets are available:
     RenderPass (half-float target)
     UnrealBloomPass (half resolution, luminance threshold above 1.0)
     OutputPass (AgX tone mapping, exposure uniform)
-    FinishPass (vignette + ordered dither, sRGB space, renders to screen)
+    FinishPass (vignette + screen-space dither (interleaved gradient
+      noise), sRGB space, renders to screen)
 
 Without float targets the scene renders directly to the canvas as today.
 Three 0.184 ships EffectComposer, RenderPass, UnrealBloomPass, and
@@ -197,8 +198,9 @@ only the core, bright giants, blue clusters, and beacons bloom; strength
 and radius tuned by eye. Off by default on phones (heat and fill rate;
 the mobile audit flagged both).
 
-Finish: a mild vignette and an ordered dither of half an LSB so the smooth
-glow gradients do not band in 8-bit output.
+Finish: a mild vignette and a screen-space dither (interleaved gradient
+noise) of half an LSB so the smooth glow gradients do not band in 8-bit
+output.
 
 All numeric values above are starting points; final values are tuned by
 eye during the build and recorded in the plan.
@@ -222,7 +224,8 @@ eye during the build and recorded in the plan.
 - Pixel ratio: still capped at 2; the quality ladder can lower the cap on
   phones when post is on.
 - prefers-reduced-motion: unchanged. Layers freeze with the stars.
-- Memory: a 1.3M-pixel half-float target is about 10MB plus bloom mips.
+- Memory: about 20MB for the composer's two half-float targets at 1.3M
+  pixels; bloom's targets are allocated but never bound while disabled.
 
 ## Testing
 
@@ -298,10 +301,11 @@ a screenshot of the old renderer.
   11000 halved the frame rate on CI's software GL and timed out the hint
   e2e test, so haze density is bought with sprite size, not count.
 - Glow sprite size (`sizeMin`/`sizeMax`) ended at 0.12 to 0.36 world units,
-  below the spec's 0.3 to 1.0 starting range: at 1.0 units a single sprite
-  covered about 106px on a 1600x900 frame, reading as a discrete grey
-  puff rather than haze. Dust count, dust size, and bloom threshold stayed
-  inside their spec ranges; deep field count (40) was never tuned.
+  shifted down from the spec's 0.3 to 1.0 starting range: at 1.0 units a
+  single sprite covered about 106px on a 1600x900 frame, reading as a
+  discrete grey puff rather than haze. Dust count, dust size, and bloom
+  threshold stayed inside their spec ranges; deep field count (40) was
+  never tuned.
 - Spikes: `BRIGHT_GIANT_CUTOFF` moved to the value in the table so only a
   few dozen disc stars carry diffraction spikes (the spec's "top few
   percent" read as a Christmas tree).

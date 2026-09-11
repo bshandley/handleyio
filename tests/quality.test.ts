@@ -30,7 +30,9 @@ describe('LADDER', () => {
 
   it('drops layer density before the star count falls below the second tier', () => {
     const firstStarDrop = LADDER.findIndex((l) => l.stars < LADDER[0].stars)
-    expect(LADDER[firstStarDrop].glow).toBeLessThan(1)
+    const priorRung = LADDER[firstStarDrop - 1]
+    expect(priorRung.stars).toBe(LADDER[0].stars)
+    expect(priorRung.glow).toBeLessThan(LADDER[0].glow)
   })
 })
 
@@ -42,8 +44,11 @@ describe('pickInitialLevel', () => {
     expect(LADDER[pickInitialLevel(2560, 1440, 10, true)].bloom).toBe(false)
     expect(LADDER[pickInitialLevel(390, 844, 6, true)].bloom).toBe(false)
   })
-  it('gives phones a reduced level', () => {
-    expect(LADDER[pickInitialLevel(390, 844, 6, true)].stars).toBeLessThanOrEqual(25_000)
+  it('gives phones the 25k rung', () => {
+    expect(LADDER[pickInitialLevel(390, 844, 6, true)].stars).toBe(25_000)
+  })
+  it('gives mid devices the 40k rung', () => {
+    expect(LADDER[pickInitialLevel(1024, 768, 4, false)].stars).toBe(40_000)
   })
 })
 

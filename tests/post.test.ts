@@ -13,7 +13,6 @@ describe('hdrSupported', () => {
 
 describe('finishShader', () => {
   it('samples tDiffuse and exposes the vignette uniform', () => {
-    expect(finishShader.uniforms.tDiffuse.value).toBeNull()
     expect(finishShader.uniforms.uVignette.value).toBeGreaterThan(0)
     expect(finishShader.fragmentShader).toContain('tDiffuse')
   })

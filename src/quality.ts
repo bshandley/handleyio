@@ -14,7 +14,8 @@ export interface QualityLevel {
 export const LADDER: readonly QualityLevel[] = [
   { stars: 60_000, glow: 1, dust: 1, bloom: true, pixelRatioCap: 2 },
   { stars: 60_000, glow: 1, dust: 1, bloom: false, pixelRatioCap: 2 },
-  { stars: 40_000, glow: 0.75, dust: 0.75, bloom: false, pixelRatioCap: 2 },
+  { stars: 60_000, glow: 0.5, dust: 0.5, bloom: false, pixelRatioCap: 2 },
+  { stars: 40_000, glow: 0.5, dust: 0.5, bloom: false, pixelRatioCap: 2 },
   { stars: 25_000, glow: 0.5, dust: 0.5, bloom: false, pixelRatioCap: 1.5 },
   { stars: 15_000, glow: 0, dust: 0, bloom: false, pixelRatioCap: 1 },
 ]
@@ -31,8 +32,8 @@ export function pickInitialLevel(
 ): number {
   const pixels = width * height
   if (!coarsePointer && pixels >= 1_500_000 && cores >= 8) return 0
-  if (pixels >= 700_000 && cores >= 4) return 2
-  return 3
+  if (pixels >= 700_000 && cores >= 4) return 3
+  return 4
 }
 
 /**

@@ -122,6 +122,7 @@ export function createStarfield(
   })
   const points = new Points(geometry, material)
   points.renderOrder = RENDER_ORDER.background
+  points.frustumCulled = false
   return {
     points,
     setPixelRatio(pr) {

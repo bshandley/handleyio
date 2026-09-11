@@ -59,6 +59,9 @@ describe('generateGalaxy', () => {
   })
 
   it('flags a small minority of stars as spiked giants', () => {
+    // At 5000 stars with BRIGHT_GIANT_CUTOFF 0.995, the expected count is
+    // single digits and depends on the seed; changing the seed or count may
+    // need a new bound.
     let spiked = 0
     for (const s of g.spike) {
       expect(s === 0 || s === 1).toBe(true)

@@ -41,4 +41,15 @@ describe('galaxy split', () => {
     expect(below.count + above.count).toBe(1000)
     expect(galaxy.below.geometry.attributes.aRadius.count).toBe(1000)
   })
+
+  it('consumes beacons as a groupOrder that outranks every per-object entry', () => {
+    for (const [key, value] of Object.entries(RENDER_ORDER)) {
+      if (key === 'beacons') continue
+      expect(RENDER_ORDER.beacons).toBeGreaterThan(value)
+    }
+  })
+
+  it('leaves galaxy.group at the default renderOrder so groupOrder 0 holds', () => {
+    expect(galaxy.group.renderOrder).toBe(0)
+  })
 })

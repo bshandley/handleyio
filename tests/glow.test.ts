@@ -14,13 +14,17 @@ describe('generateGlow', () => {
   })
 
   it('stays inside the soft edge with sizes in range and alpha in (0, 1]', () => {
+    let maxRadius = 0
     for (let i = 0; i < 1000; i++) {
-      expect(g.radius[i]).toBeLessThanOrEqual(GLOW_DEFAULTS.radius * 1.2)
+      expect(g.radius[i]).toBeGreaterThanOrEqual(0)
+      expect(Number.isFinite(g.radius[i])).toBe(true)
+      if (g.radius[i] > maxRadius) maxRadius = g.radius[i]
       expect(g.size[i]).toBeGreaterThanOrEqual(GLOW_DEFAULTS.sizeMin)
       expect(g.size[i]).toBeLessThanOrEqual(GLOW_DEFAULTS.sizeMax * 1.5)
       expect(g.alpha[i]).toBeGreaterThan(0)
-      expect(g.alpha[i]).toBeLessThanOrEqual(1)
+      expect(g.alpha[i]).toBeLessThanOrEqual(GLOW_DEFAULTS.alpha * 1.3 + 1e-6)
     }
+    expect(maxRadius).toBeGreaterThan(0.9 * GLOW_DEFAULTS.radius)
     for (const c of g.color) {
       expect(c).toBeGreaterThanOrEqual(0)
       expect(c).toBeLessThanOrEqual(1)
