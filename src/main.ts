@@ -1,4 +1,5 @@
 import { createControls } from './camera/controls'
+import { RENDER_ORDER } from './galaxy/order'
 import { createHud } from './hud/panel'
 import { createNodeNav } from './hud/nodenav'
 import { createTelemetry } from './hud/telemetry'
@@ -21,6 +22,7 @@ function init() {
   const rig = createControls(sceneCtx.camera, sceneCtx.renderer.domElement)
 
   const beacons = createBeacons(NODES)
+  beacons.group.renderOrder = RENDER_ORDER.beacons
   sceneCtx.scene.add(beacons.group)
 
   const hud = createHud(

@@ -1,4 +1,5 @@
 import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
+import { createArmModel } from './galaxy/arms'
 import { createGalaxy, type Galaxy } from './galaxy/galaxy'
 import { createStarfield } from './galaxy/starfield'
 
@@ -30,8 +31,9 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
   renderer.setSize(innerWidth, innerHeight)
   container.appendChild(renderer.domElement)
 
-  const galaxy = createGalaxy({ count: particleCount })
-  scene.add(galaxy.points)
+  const model = createArmModel()
+  const galaxy = createGalaxy(model, { count: particleCount }, renderer.getPixelRatio())
+  scene.add(galaxy.group)
   scene.add(createStarfield())
 
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -80,6 +82,7 @@ export function createScene(container: HTMLElement, particleCount: number): Gala
       elapsed += dt
       galaxy.setTime(elapsed)
     }
+    galaxy.setCameraSide(camera.position.y >= 0)
     for (const cb of frameCbs) cb(dt, elapsed)
     renderer.render(scene, camera)
     window.__frameCount = (window.__frameCount ?? 0) + 1
