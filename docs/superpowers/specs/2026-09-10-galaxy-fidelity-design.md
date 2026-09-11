@@ -2,8 +2,8 @@
 
 Date: 2026-09-10
 Status: approved
-Linear: milestone "Galaxy fidelity" under project handley.io (created at
-approval)
+Linear: none this round (Bradley's call at approval; the plan's own
+checkboxes track progress)
 
 ## Why
 
