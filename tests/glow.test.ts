@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createArmModel } from '../src/galaxy/arms'
 import { createGlow, generateGlow, GLOW_DEFAULTS } from '../src/galaxy/glow'
 import { RENDER_ORDER } from '../src/galaxy/order'
+import { eccentricityAt } from '../src/galaxy/orbit'
 import { mulberry } from './rng'
 
 describe('generateGlow', () => {
@@ -36,6 +37,22 @@ describe('generateGlow', () => {
     for (const r of g.radius) if (r < GLOW_DEFAULTS.bulgeRadius * 2) inner++
     expect(inner / 1000).toBeGreaterThan(GLOW_DEFAULTS.bulgeFraction * 0.6)
   })
+
+  it('disc haze follows the eccentricity law; bulge haze is circular', () => {
+    let circular = 0
+    for (let i = 0; i < 1000; i++) {
+      if (g.ecc[i] === 0) circular++
+      else expect(g.ecc[i]).toBeCloseTo(eccentricityAt(g.radius[i]), 6)
+    }
+    expect(circular / 1000).toBeGreaterThan(GLOW_DEFAULTS.bulgeFraction * 0.7)
+  })
+
+  it('bulge haze has a compact core component', () => {
+    const core = GLOW_DEFAULTS.bulgeRadius * GLOW_DEFAULTS.bulgeCoreSigma * 2
+    let inCore = 0
+    for (let i = 0; i < 1000; i++) if (g.ecc[i] === 0 && g.radius[i] < core) inCore++
+    expect(inCore / 1000).toBeGreaterThan(GLOW_DEFAULTS.bulgeFraction * GLOW_DEFAULTS.bulgeCoreShare * 0.6)
+  })
 })
 
 describe('createGlow', () => {
@@ -48,6 +65,9 @@ describe('createGlow', () => {
     expect(layer.mesh.geometry.instanceCount).toBe(100)
     layer.setViewport(400, 300)
     layer.setTime(12)
+    layer.setProximity(6)
+    expect(layer.mesh.material.uniforms.uProximity.value).toBe(6)
+    expect(layer.mesh.material.uniforms.uGlowArm.value).toBeGreaterThan(0)
     layer.dispose()
   })
 })

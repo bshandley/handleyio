@@ -150,6 +150,7 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
     }
     galaxy.setCameraSide(camera.position.y >= 0)
     dust.setFade(dustFade(camera.position.y / camera.position.length()))
+    glow.setProximity(camera.position.length())
     for (const cb of frameCbs) cb(dt, elapsed)
     renderer.info.reset()
     post.render()
