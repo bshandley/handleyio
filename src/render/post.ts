@@ -21,8 +21,12 @@ export type RenderPath = 'hdr' | 'direct'
 
 export type ToneMapper = 'agx' | 'neutral'
 
-/** Shipped mapper. Task 1's spike decides it; Task 12's table records why. */
-export const TONE_MAPPER: ToneMapper = 'agx'
+/**
+ * Shipped mapper. The 2026-09-12 spike chose Neutral: outer arms hold their
+ * blue where AgX greys them out, and the core reads gold to pale rather than
+ * brown (captures agx-085, neutral-085, agx-110, neutral-110).
+ */
+export const TONE_MAPPER: ToneMapper = 'neutral'
 export const EXPOSURE = 0.85
 export const BLOOM = { strength: 0.3, radius: 0.6, threshold: 1.0 }
 export const VIGNETTE = 0.35
