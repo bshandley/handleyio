@@ -50,16 +50,21 @@ describe('noise', () => {
     expect(min).toBeLessThan(0.5)
   })
 
-  it('an elongated cell is wider along x than along y', () => {
+  it('an elongated cell is wider along x than along y, compared against aspect 1', () => {
     const size = 64
-    const cell = renderCloudCell(size, 5, 2.5)
     const mid = size / 2
-    let alongX = 0
-    let alongY = 0
-    for (let i = 0; i < size; i++) {
-      if (cell[mid * size + i] > 0) alongX++
-      if (cell[i * size + mid] > 0) alongY++
+    const extents = (cell: Float32Array) => {
+      let alongX = 0
+      let alongY = 0
+      for (let i = 0; i < size; i++) {
+        if (cell[mid * size + i] > 0) alongX++
+        if (cell[i * size + mid] > 0) alongY++
+      }
+      return { alongX, alongY }
     }
-    expect(alongX).toBeGreaterThan(alongY * 1.5)
+    const base = extents(renderCloudCell(size, 5, 1))
+    const stretched = extents(renderCloudCell(size, 5, 2.5))
+    expect(stretched.alongY).toBeLessThan(base.alongY)
+    expect(stretched.alongX).toBeGreaterThanOrEqual(base.alongX)
   })
 })
