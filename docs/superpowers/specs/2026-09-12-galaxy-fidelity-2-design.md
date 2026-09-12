@@ -1,7 +1,7 @@
 # Galaxy fidelity round two: density-wave orbits, light model, close range, dust, beacons
 
 Date: 2026-09-12
-Status: draft, awaiting Bradley's review
+Status: approved 2026-09-12
 Linear: milestone to be created at approval if the Linear MCP is
 authenticated in the build session; otherwise the plan's checkboxes track
 progress as in round one.
