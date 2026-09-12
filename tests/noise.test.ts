@@ -49,4 +49,17 @@ describe('noise', () => {
     expect(max).toBeGreaterThan(0.5)
     expect(min).toBeLessThan(0.5)
   })
+
+  it('an elongated cell is wider along x than along y', () => {
+    const size = 64
+    const cell = renderCloudCell(size, 5, 2.5)
+    const mid = size / 2
+    let alongX = 0
+    let alongY = 0
+    for (let i = 0; i < size; i++) {
+      if (cell[mid * size + i] > 0) alongX++
+      if (cell[i * size + mid] > 0) alongY++
+    }
+    expect(alongX).toBeGreaterThan(alongY * 1.5)
+  })
 })
