@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { ARM_DEFAULTS, createArmModel } from '../src/galaxy/arms'
+import { createArmModel } from '../src/galaxy/arms'
 import { generateGalaxy, GALAXY_DEFAULTS, PALETTE, paletteAt } from '../src/galaxy/generate'
 import { mulberry } from './rng'
 
 describe('generateGalaxy', () => {
-  const model = createArmModel(ARM_DEFAULTS, mulberry(1))
+  const model = createArmModel()
   const g = generateGalaxy({ ...GALAXY_DEFAULTS, count: 5000 }, model, mulberry(42))
 
   it('produces buffers sized to count', () => {
@@ -14,6 +14,10 @@ describe('generateGalaxy', () => {
     expect(g.size).toHaveLength(5000)
     expect(g.spike).toHaveLength(5000)
     expect(g.color).toHaveLength(15000)
+  })
+
+  it('carries a per-star eccentricity buffer', () => {
+    expect(g.ecc).toHaveLength(5000)
   })
 
   it('keeps radii within the soft-edge bound (1.2x nominal radius)', () => {

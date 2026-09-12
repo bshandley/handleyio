@@ -55,6 +55,8 @@ export interface GalaxyBuffers {
   size: Float32Array
   /** 1 for bright giants drawn with diffraction spikes, else 0. */
   spike: Float32Array
+  /** Orbital eccentricity, 0 circular. */
+  ecc: Float32Array
   /** Buffers are sorted by y; entries [0, splitIndex) have y < 0. */
   splitIndex: number
 }
@@ -83,6 +85,7 @@ export function generateGalaxy(
   const color = new Float32Array(n * 3)
   const size = new Float32Array(n)
   const spike = new Float32Array(n)
+  const ecc = new Float32Array(n)
   const gauss = makeGauss(rand)
   const arms = model.params.arms
 
@@ -127,7 +130,7 @@ export function generateGalaxy(
       // arm population, kept out of the bulge core
       r = (ARM_FLOOR + (1 - ARM_FLOOR) * Math.pow(rand(), ARM_EXPONENT)) * p.radius
       const t = r / p.radius
-      a = model.sample(i % arms, r, t, rand, gauss)
+      a = rand() * Math.PI * 2
       yy = gauss() * p.thickness * (1.0 - 0.75 * t)
     }
 
@@ -169,7 +172,7 @@ export function generateGalaxy(
     color[i * 3 + 2] = clamp01(cb * jitter * brighten)
   }
 
-  return sortByY({ radius, angle, y, color, size, spike })
+  return sortByY({ radius, angle, y, color, size, spike, ecc })
 }
 
 // Sort every buffer by y so galaxy.ts can draw the below-plane half and the
@@ -203,6 +206,7 @@ function sortByY(b: Omit<GalaxyBuffers, 'splitIndex'>): GalaxyBuffers {
     color,
     size: permute(b.size),
     spike: permute(b.spike),
+    ecc: permute(b.ecc),
     splitIndex,
   }
 }

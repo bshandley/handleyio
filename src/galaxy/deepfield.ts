@@ -63,6 +63,7 @@ export function createDeepField(
 ): DeepField {
   const uniforms = billboardUniforms(width, height)
   uniforms.uOrbit.value = 0
+  uniforms.uPattern.value = 0
   const material = new ShaderMaterial({
     vertexShader: billboardVertex,
     fragmentShader: deepFieldFragment,

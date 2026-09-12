@@ -11,7 +11,7 @@ import {
 import type { ArmModel } from './arms'
 import { generateGalaxy, GALAXY_DEFAULTS, type GalaxyParams } from './generate'
 import { RENDER_ORDER } from './order'
-import { galaxyFragment, galaxyVertex } from './shaders'
+import { galaxyFragment, galaxyVertex, orbitUniforms } from './shaders'
 
 export const STAR_INTENSITY = 0.36
 const BASE_POINT_SIZE = 22
@@ -41,8 +41,7 @@ export function createGalaxy(
     vertexShader: galaxyVertex,
     fragmentShader: galaxyFragment,
     uniforms: {
-      uTime: { value: 0 },
-      uOrbit: { value: 1 },
+      ...orbitUniforms(),
       uSize: { value: BASE_POINT_SIZE * pixelRatio },
       uIntensity: { value: STAR_INTENSITY },
     },
@@ -107,6 +106,7 @@ function buildGeometries(
     aColor: new BufferAttribute(g.color, 3),
     aSize: new BufferAttribute(g.size, 1),
     aSpike: new BufferAttribute(g.spike, 1),
+    aEcc: new BufferAttribute(g.ecc, 1),
   }
   const make = (start: number, count: number) => {
     const geometry = new BufferGeometry()

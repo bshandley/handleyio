@@ -101,9 +101,8 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
   const clock = new Clock()
   const frameCbs: Array<(dt: number, elapsed: number) => void> = []
-  // Start well into the swirl so differential rotation has already sheared
-  // the arms out of their symmetric phases (scaled with orbitalSpeed).
-  let elapsed = 160
+  // Density-wave arms need no pre-wind; the pattern is stable from t = 0.
+  let elapsed = 0
   let running = true
   let contextLost = false
   const setTime = (t: number) => {

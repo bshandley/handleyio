@@ -8,6 +8,7 @@ import {
   solveElements,
   tilt,
 } from '../src/galaxy/orbit'
+import { orbitChunk } from '../src/galaxy/shaders'
 
 describe('orbit model', () => {
   it('keeps the round-one rotation curve', () => {
@@ -83,5 +84,47 @@ describe('orbit model', () => {
     orbitPosition(e, 42, out)
     expect(out.x).toBeCloseTo(1.5, 4)
     expect(out.z).toBeCloseTo(-2.0, 4)
+  })
+})
+
+describe('GLSL orbit chunk', () => {
+  // Hand transcription of orbitChunk. If this drifts from the GLSL, the
+  // beacons (CPU) and the stars (GPU) part ways on screen.
+  function glsl(a: number, phase0: number, y: number, ecc: number, tiltOffset: number, uTime: number) {
+    const uSpin = ORBIT.spin
+    const uWobble = ORBIT.wobble
+    const uPattern = ORBIT.pattern
+    const uOrbit = 1
+    const orbitOmega = (a: number) => 0.0875 / (0.3 + a)
+    const orbitTilt = (a: number, offset: number) =>
+      uSpin * a + uWobble * Math.sin(a * 3.1) + uPattern * uTime + offset
+    const phi = phase0 + orbitOmega(a) * uTime * uOrbit
+    const th = orbitTilt(a, tiltOffset)
+    const lx = a * Math.cos(phi)
+    const lz = a * (1.0 - ecc) * Math.sin(phi)
+    const c = Math.cos(th)
+    const s = Math.sin(th)
+    return [c * lx - s * lz, y, s * lx + c * lz]
+  }
+
+  it('matches orbitPosition for a handful of elements', () => {
+    const out = new Vector3()
+    for (const [a, phase, y, ecc, off, t] of [
+      [1, 0, 0, 0, 0, 0],
+      [2.5, 1.2, 0.1, 0.3, 0, 33],
+      [4, -2, -0.2, 0.15, -0.25, 210],
+      [0.4, 3, 0.05, 0, 0, 900],
+    ]) {
+      orbitPosition({ a, phase, y, ecc }, t, out, ORBIT, off)
+      const [x, yy, z] = glsl(a, phase, y, ecc, off, t)
+      expect(out.x).toBeCloseTo(x, 9)
+      expect(out.y).toBeCloseTo(yy, 9)
+      expect(out.z).toBeCloseTo(z, 9)
+    }
+  })
+
+  it('inlines the same curve constants as orbit.ts', () => {
+    expect(orbitChunk).toContain('0.0875 / (0.3 + a)')
+    expect(orbitChunk).toContain('sin(a * 3.1)')
   })
 })

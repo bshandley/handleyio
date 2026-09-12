@@ -55,12 +55,12 @@ const GLOW_EXPONENT = 0.9
 
 export function generateGlow(
   p: GlowParams,
-  model: ArmModel,
+  // Unused until arm crowding drives glow placement (Task 4).
+  _model: ArmModel,
   rand: () => number = Math.random,
 ): BillboardBuffers {
   const b = allocBillboards(p.count)
   const gauss = makeGauss(rand)
-  const arms = model.params.arms
 
   for (let i = 0; i < p.count; i++) {
     const inBulge = rand() < p.bulgeFraction
@@ -78,7 +78,7 @@ export function generateGlow(
     } else {
       r = (GLOW_FLOOR + (1 - GLOW_FLOOR) * Math.pow(rand(), GLOW_EXPONENT)) * p.radius
       const t = r / p.radius
-      a = model.sample(i % arms, r, t, rand, gauss)
+      a = rand() * Math.PI * 2
       yy = gauss() * p.thickness * (1.0 - 0.6 * t)
       color = paletteAt(p.palette, t)
     }

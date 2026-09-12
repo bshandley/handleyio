@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { ARM_DEFAULTS, createArmModel } from '../src/galaxy/arms'
+import { createArmModel } from '../src/galaxy/arms'
 import { createGlow, generateGlow, GLOW_DEFAULTS } from '../src/galaxy/glow'
 import { RENDER_ORDER } from '../src/galaxy/order'
 import { mulberry } from './rng'
 
 describe('generateGlow', () => {
-  const model = createArmModel(ARM_DEFAULTS, mulberry(1))
+  const model = createArmModel()
   const g = generateGlow({ ...GLOW_DEFAULTS, count: 1000 }, model, mulberry(9))
 
   it('sizes buffers to count', () => {
@@ -40,7 +40,7 @@ describe('generateGlow', () => {
 
 describe('createGlow', () => {
   it('builds an additive mesh in the glow render slot', () => {
-    const model = createArmModel(ARM_DEFAULTS, mulberry(1))
+    const model = createArmModel()
     const layer = createGlow(model, 800, 600, { count: 200 }, mulberry(3))
     expect(layer.mesh.renderOrder).toBe(RENDER_ORDER.glow)
     expect(layer.mesh.frustumCulled).toBe(false)

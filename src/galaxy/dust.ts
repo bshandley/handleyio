@@ -80,12 +80,12 @@ export function dustFade(sinElevation: number): number {
 
 export function generateDust(
   p: DustParams,
-  model: ArmModel,
+  // Unused until Task 6 puts lanes back on the ellipse ridge.
+  _model: ArmModel,
   rand: () => number = Math.random,
 ): BillboardBuffers {
   const b = allocBillboards(p.count)
   const gauss = makeGauss(rand)
-  const arms = model.params.arms
   const inner = p.bulgeRadius * 1.6
   const outer = p.radius
 
@@ -94,7 +94,7 @@ export function generateDust(
     let a: number
     if (rand() < p.laneFraction) {
       r = inner + (outer - inner) * Math.pow(rand(), 1.2)
-      a = model.laneAngle(i % arms, r, p.laneOffset) + gauss() * 0.06
+      a = rand() * Math.PI * 2
     } else {
       r = Math.sqrt(lerp(inner * inner, outer * outer, rand()))
       a = rand() * Math.PI * 2
