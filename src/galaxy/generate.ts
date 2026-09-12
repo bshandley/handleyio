@@ -1,5 +1,6 @@
 import type { ArmModel } from './arms'
 import { clamp01, lerp, makeGauss } from './math'
+export { orbitalSpeed } from './orbit'
 
 export type Rgb = [number, number, number]
 /** Radial color stops at t = 0, 1/3, 2/3, 1. */
@@ -35,12 +36,6 @@ export const GALAXY_DEFAULTS: GalaxyParams = {
   bulgeFlatten: 0.6,
   bulgeFraction: 0.09,
   palette: PALETTE,
-}
-
-// Differential rotation curve. The GLSL orbitChunk in shaders.ts inlines the
-// same constants; keep them in sync.
-export function orbitalSpeed(radius: number): number {
-  return 0.0875 / (0.3 + radius)
 }
 
 export function paletteAt(palette: Palette, t: number): Rgb {
