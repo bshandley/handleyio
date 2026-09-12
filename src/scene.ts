@@ -6,7 +6,7 @@ import { createGalaxy, type Galaxy } from './galaxy/galaxy'
 import { createGlow } from './galaxy/glow'
 import { createStarfield } from './galaxy/starfield'
 import type { QualityLevel } from './quality'
-import { createPost, type PostChain } from './render/post'
+import { createPost, parseExposureParam, parseToneParam, type PostChain } from './render/post'
 
 export interface GalaxyScene {
   scene: Scene
@@ -68,7 +68,10 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
   const deepField = createDeepField(innerWidth * pixelRatio, innerHeight * pixelRatio)
   scene.add(starfield.points, deepField.mesh, glow.mesh, galaxy.group, dust.mesh)
 
-  const post = createPost(renderer, scene, camera, innerWidth, innerHeight)
+  const post = createPost(renderer, scene, camera, innerWidth, innerHeight, {
+    tone: parseToneParam(location.search) ?? undefined,
+    exposure: parseExposureParam(location.search) ?? undefined,
+  })
   window.__renderPath = post.path
 
   let currentStars = level.stars

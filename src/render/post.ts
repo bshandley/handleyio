@@ -1,5 +1,6 @@
 import {
   AgXToneMapping,
+  NeutralToneMapping,
   Vector2,
   type PerspectiveCamera,
   type Scene,
@@ -18,9 +19,32 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 export type RenderPath = 'hdr' | 'direct'
 
+export type ToneMapper = 'agx' | 'neutral'
+
+/** Shipped mapper. Task 1's spike decides it; Task 12's table records why. */
+export const TONE_MAPPER: ToneMapper = 'agx'
 export const EXPOSURE = 0.85
-export const BLOOM = { strength: 0.3, radius: 0.3, threshold: 1.0 }
+export const BLOOM = { strength: 0.3, radius: 0.6, threshold: 1.0 }
 export const VIGNETTE = 0.35
+
+/** Dev aid: `?tone=agx|neutral` pins the mapper for side-by-side captures. */
+export function parseToneParam(search: string): ToneMapper | null {
+  const raw = new URLSearchParams(search).get('tone')
+  return raw === 'agx' || raw === 'neutral' ? raw : null
+}
+
+/** Dev aid: `?exposure=N` pins the exposure for captures; null unless finite and positive. */
+export function parseExposureParam(search: string): number | null {
+  const raw = new URLSearchParams(search).get('exposure')
+  if (raw === null) return null
+  const value = Number(raw)
+  return Number.isFinite(value) && value > 0 ? value : null
+}
+
+export interface PostOptions {
+  tone?: ToneMapper
+  exposure?: number
+}
 
 export function hdrSupported(has: (name: string) => boolean): boolean {
   return has('EXT_color_buffer_float') || has('EXT_color_buffer_half_float')
@@ -70,6 +94,7 @@ export function createPost(
   camera: PerspectiveCamera,
   width: number,
   height: number,
+  options: PostOptions = {},
 ): PostChain {
   if (!hdrSupported((name) => renderer.extensions.has(name))) {
     return {
@@ -84,8 +109,8 @@ export function createPost(
     }
   }
 
-  renderer.toneMapping = AgXToneMapping
-  renderer.toneMappingExposure = EXPOSURE
+  renderer.toneMapping = (options.tone ?? TONE_MAPPER) === 'neutral' ? NeutralToneMapping : AgXToneMapping
+  renderer.toneMappingExposure = options.exposure ?? EXPOSURE
 
   const composer = new EffectComposer(renderer)
   const bloom = new UnrealBloomPass(
