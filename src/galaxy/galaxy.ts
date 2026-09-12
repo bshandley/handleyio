@@ -13,8 +13,15 @@ import { generateGalaxy, GALAXY_DEFAULTS, type GalaxyParams } from './generate'
 import { RENDER_ORDER } from './order'
 import { galaxyFragment, galaxyVertex, orbitUniforms } from './shaders'
 
-export const STAR_INTENSITY = 0.36
+export const STAR_INTENSITY = 0.6
 const BASE_POINT_SIZE = 22
+
+/** Extra brightness for stars inside an arm (young population). */
+export const ARM_LUM = 0.8
+/** Blue shift blend for stars inside an arm. */
+export const ARM_BLUE = 0.6
+/** Giant flicker amplitude. */
+export const TWINKLE = 0.15
 
 export interface Galaxy {
   group: Group
@@ -44,6 +51,9 @@ export function createGalaxy(
       ...orbitUniforms(),
       uSize: { value: BASE_POINT_SIZE * pixelRatio },
       uIntensity: { value: STAR_INTENSITY },
+      uArmLum: { value: ARM_LUM },
+      uArmBlue: { value: ARM_BLUE },
+      uTwinkle: { value: TWINKLE },
     },
     transparent: true,
     depthWrite: false,
@@ -107,6 +117,7 @@ function buildGeometries(
     aSize: new BufferAttribute(g.size, 1),
     aSpike: new BufferAttribute(g.spike, 1),
     aEcc: new BufferAttribute(g.ecc, 1),
+    aLum: new BufferAttribute(g.lum, 1),
   }
   const make = (start: number, count: number) => {
     const geometry = new BufferGeometry()

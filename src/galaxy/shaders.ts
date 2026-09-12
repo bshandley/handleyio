@@ -90,15 +90,20 @@ export const galaxyVertex =
   orbitChunk +
   /* glsl */ `
 uniform float uSize;
+uniform float uArmLum;
+uniform float uArmBlue;
+uniform float uTwinkle;
 attribute float aRadius;
 attribute float aAngle;
 attribute float aY;
 attribute float aSize;
 attribute float aSpike;
 attribute float aEcc;
+attribute float aLum;
 attribute vec3 aColor;
 varying vec3 vColor;
 varying float vSpike;
+varying float vLum;
 
 void main() {
   vec3 world = orbitPosition(aRadius, aAngle, aY, aEcc, 0.0);
@@ -106,7 +111,16 @@ void main() {
   gl_Position = projectionMatrix * mv;
   float px = uSize * aSize / max(0.001, -mv.z);
   gl_PointSize = aSpike > 0.5 ? px * 2.5 : px;
-  vColor = aColor;
+  // young population: brighter and bluer while inside an arm
+  float arm = orbitArmness(world, aRadius, aEcc, 0.0);
+  float lum = aLum * (1.0 + uArmLum * arm);
+  // giants only: slow per-star flicker keyed off the phase attribute
+  if (aSpike > 0.5) {
+    lum *= 1.0 + uTwinkle * sin(uTime * (0.7 + fract(aAngle * 7.31) * 1.3) + aAngle * 13.0);
+  }
+  vLum = lum;
+  vec3 young = vec3(aColor.r * 0.85, aColor.g * 0.95, min(1.0, aColor.b + 0.15));
+  vColor = mix(aColor, young, uArmBlue * arm);
   vSpike = aSpike;
 }
 `
@@ -117,10 +131,11 @@ export const galaxyFragment =
 uniform float uIntensity;
 varying vec3 vColor;
 varying float vSpike;
+varying float vLum;
 
 void main() {
   vec2 p = gl_PointCoord - 0.5;
   float alpha = vSpike > 0.5 ? starCore(p * 2.5) + starSpikes(p) : starCore(p);
-  gl_FragColor = vec4(vColor * uIntensity, alpha);
+  gl_FragColor = vec4(vColor * uIntensity * vLum, alpha);
 }
 `
