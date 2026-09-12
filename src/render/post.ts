@@ -14,8 +14,9 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 // HDR chain: additive layers accumulate into a half-float target, bloom
-// lifts only what exceeds 1.0, AgX rolls the core off to white without a
-// hue skew, and a finish pass adds vignette and dither in sRGB space.
+// lifts only what exceeds 1.0, Neutral tone mapping preserves hue and
+// saturation up the curve (AgX remains selectable through the ?tone pin),
+// and a finish pass adds vignette and dither in sRGB space.
 
 export type RenderPath = 'hdr' | 'direct'
 
