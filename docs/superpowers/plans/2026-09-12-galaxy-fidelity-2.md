@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - No em dashes anywhere (code, comments, commits, docs).
-- The render loop allows zero per-frame allocations (repo CLAUDE.md). Per-frame work this plan adds: scalar uniform writes (glow proximity, finish time, beacon time) and five HUD tag transform writes that happen only when a rounded screen position changes.
+- The render loop allows zero per-frame allocations (repo CLAUDE.md). Per-frame work this plan adds: scalar uniform writes (glow proximity, finish time, beacon time) and five HUD tag transform writes that happen only when a rounded screen position changes. Each HUD tag keeps its own `ScreenPos` scratch object (written by `toScreenInto`), and beacons.ts walks a plain `orbitList` array snapshotted from the lookup Map at init, so neither loop allocates (whole-branch review, Important).
 - The orbit curve lives in three places and must stay identical: `ORBIT` constants and functions in `src/galaxy/orbit.ts`, the GLSL `orbitChunk` in `src/galaxy/shaders.ts`, and nowhere else (beacons and generators import `orbit.ts`). A unit test transcribes the GLSL into TypeScript and compares.
 - The no-WebGL fallback HTML in index.html is untouched.
 - Node registry positions are data (world positions at t = 0); galaxy and HUD code never special-case nodes.
@@ -29,7 +29,7 @@
 - The armness peak sits on the ellipse major axis (`cos(2 (psi - tilt))`). A tunable `uArmShift` radians offsets it if the crowding caustic turns out to sit off the apsides on hardware.
 - Pattern speed starts at 0.02 rad/s (one pattern turn in about 314 s; corotation near a = 4.1, so most of the disc overtakes the arms). Tunable in Task 12.
 - `orbitalSpeed()` moves to `orbit.ts` as `omega()`; `generate.ts` re-exports `orbitalSpeed` until Task 6 retires the last importer, then the re-export goes.
-- `dustFade` and its constants stay (safety net); the camera clamp keeps `|sin(elevation)|` at or above sin(12 deg) = 0.208, above `FADE_FULL` (0.18), so it never engages in normal use.
+- `dustFade` and its constants stay (safety net); the camera clamp keeps `|sin(elevation)|` at or above cos(78 deg) = 0.208, above `FADE_FULL` (0.18), so it never engages in normal use.
 - Sim time starts at 0 (`elapsed = 0` in scene.ts). The 160 s pre-wind goes with the material arms.
 
 **Task ordering:** tone spike, orbit mirror, orbit chunk and buffers, stars, glow and bulge, dust, beacons, camera, background, finish grain, HUD, tune and ship. The tone spike lands first so every later layer is judged under the mapper that ships.
@@ -2334,7 +2334,7 @@ git commit -m "feat: beacon designation tags, hint moved to the lower third"
 - Modify: `docs/superpowers/specs/2026-09-12-galaxy-fidelity-2-design.md` (deviations section)
 - Modify: `CLAUDE.md` (bindings), `public/og.png`
 
-- [ ] **Step 1: Capture the tuning set**
+- [x] **Step 1: Capture the tuning set**
 
 ```bash
 npm run build && (npx vite preview --port 4173 --strictPort &) && sleep 2
@@ -2345,38 +2345,42 @@ node scripts/capture-look.mjs /tmp/look/zoom.png "" zoom
 
 Read both. Check against the spec's success criteria: two arms with no ring-up; faint-to-bright stars with a few blooming giants; blue outer arms, gold-to-white core; peaked bulge with spill; a closest zoom that still reads as a galaxy; filamentary lanes with knots; beacons as stars; textured background. Adjust one constant at a time, recapture, and fill the table.
 
-- [ ] **Step 2: Constants table**
+- [x] **Step 2: Constants table**
 
 Fill the Final column as you go. Every value here is the tuning record for this round.
 
 | Constant | File | Starting value | Final |
 |---|---|---|---|
-| `TONE_MAPPER` (Task 1 spike; note capture names and the reason) | src/render/post.ts | agx | |
-| `EXPOSURE` | src/render/post.ts | 0.85 | |
-| `BLOOM.strength / radius / threshold` | src/render/post.ts | 0.3 / 0.6 / 1.0 | |
-| `GRAIN` | src/render/post.ts | 1.5 | |
-| `ORBIT.spin / wobble / pattern / eInner / eFalloff` | src/galaxy/orbit.ts | 0.95 / 0.1 / 0.02 / 0.35 / 0.5 | |
-| `ARM_POWER / ARM_SHIFT` | src/galaxy/shaders.ts | 3.0 / 0.0 | |
-| `STAR_INTENSITY` | src/galaxy/galaxy.ts | 0.6 | |
-| `ARM_LUM / ARM_BLUE / TWINKLE` | src/galaxy/galaxy.ts | 0.8 / 0.6 / 0.15 | |
-| `LUM_FLOOR / LUM_SCALE / GIANT_LUM` | src/galaxy/generate.ts | 0.15 / 1.0 / 3.0 | |
-| `GALAXY_DEFAULTS.bulgeFraction / bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma` | src/galaxy/generate.ts | 0.12 / 0.35 / 0.3 / 2.5 | |
-| `PALETTE` | src/galaxy/generate.ts | round-one values | |
-| `GLOW_DEFAULTS.bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma / bulgeAlphaScale` | src/galaxy/glow.ts | 0.4 / 0.3 / 2.5 / 0.5 | |
-| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | |
-| `PROXIMITY.far / near / min` | src/galaxy/glow.ts | 7.0 / 5.5 / 0.45 | |
-| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | |
-| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | |
-| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | |
-| `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | |
-| `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | |
-| `MIN_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | |
+| `TONE_MAPPER` (Task 1 spike; note capture names and the reason) | src/render/post.ts | agx | neutral (Task 1 spike: agx-085/neutral-085/agx-110/neutral-110 captures; outer arms hold blue and the core rolls gold to pale under Neutral, grey/plateau under AgX) |
+| `EXPOSURE` | src/render/post.ts | 0.85 | 0.85 (untouched) |
+| `BLOOM.strength / radius / threshold` | src/render/post.ts | 0.3 / 0.6 / 1.0 | 0.3 / 0.6 / 1.0 (untouched; reads well) |
+| `GRAIN` | src/render/post.ts | 1.5 | 1.5 (untouched) |
+| `ORBIT.spin / wobble / pattern / eInner / eFalloff` | src/galaxy/orbit.ts | 0.95 / 0.1 / 0.02 / 0.35 / 0.5 | 1.7 / 0.1 / 0.02 / 0.55 / 0.5 (spin and eInner were the headline fix for the no-spiral problem; wobble/pattern/eFalloff untouched) |
+| `ARM_POWER / ARM_SHIFT` | src/galaxy/shaders.ts | 3.0 / 0.0 | 3.0 / 0.0 (untouched; the spiral read clearly once spin/eInner/ARM_LUM/GLOW_ARM moved) |
+| `STAR_INTENSITY` | src/galaxy/galaxy.ts | 0.6 | 0.6 (untouched) |
+| `ARM_LUM / ARM_BLUE / TWINKLE` | src/galaxy/galaxy.ts | 0.8 / 0.6 / 0.15 | 1.3 / 0.6 / 0.15 (ARM_LUM raised to sharpen arm/inter-arm contrast) |
+| `LUM_FLOOR / LUM_SCALE / GIANT_LUM` | src/galaxy/generate.ts | 0.15 / 1.0 / 3.0 | 0.15 / 1.0 / 3.0 (untouched) |
+| `CLUSTER_LUM_FACTOR` (new; not in the spec's table) | src/galaxy/generate.ts | n/a | 0.6 (dims non-giant cluster members so a cluster reads as a sparkle, not a smear; see deviations) |
+| cluster phase jitter (`gauss() * 0.06` in `generateGalaxy`) | src/galaxy/generate.ts | 0.06 | 0.16 (clusters were compact flat blobs; widened per the tuning notes' 0.12-0.2 range) |
+| `GALAXY_DEFAULTS.bulgeFraction / bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma` | src/galaxy/generate.ts | 0.12 / 0.35 / 0.3 / 2.5 | 0.12 / 0.35 / 0.3 / 1.4 (halo shrunk to kill the floating yellow blobs; kept in step with GLOW_DEFAULTS) |
+| `PALETTE` | src/galaxy/generate.ts | round-one values | round-one values (untouched; reads well) |
+| `GLOW_DEFAULTS.bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma / bulgeAlphaScale` | src/galaxy/glow.ts | 0.4 / 0.3 / 2.5 / 0.5 | 0.4 / 0.3 / 1.4 / 0.5 (bulgeAlphaScale untouched; the smaller halo alone tamed the core) |
+| glow bulge y-flatten factor (`* 0.6` in `generateGlow`; not a named param) | src/galaxy/glow.ts | 0.6 | 0.35 (see deviations) |
+| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | 0.85 (raised alongside ARM_LUM for arm/inter-arm contrast) |
+| `PROXIMITY.far / near / min` | src/galaxy/glow.ts | 7.0 / 5.5 / 0.45 | 7.0 / 5.5 / 0.45 (untouched) |
+| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | 0.8, 0.048 (untouched) |
+| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | 0.22 / 0.15 / 0.28 / 2.2 / 0.3 (alphaFloor raised; the layer was confirmed working, just too subtle to read) |
+| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.85, 0.6 (DUST_ARM untouched; lanes already sat on the concave side, no laneTilt sign flip needed) |
+| `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | 1.8 / 0.55 (untouched; reads well) |
+| `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | 0.5 (untouched) |
+| `MAX_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 78 / 5.5 (whole-branch review: 12/168 forbade the poles, not the plane; single hemisphere clamp, `MIN_DISTANCE` untouched) |
+| `DIRECT_PATH_SCALE` (new; not in the spec's table) | src/render/post.ts | n/a | 0.4 (whole-branch review: the direct path has no tone mapper, so the layers tuned for the HDR curve clipped the core and giants flat white; `final-direct-load.png` confirmed 0.4 keeps individual bulge stars visible with no flat white disc) |
 
-- [ ] **Step 3: Ten-minute check**
+- [x] **Step 3: Ten-minute check**
 
 With the preview running, open `http://localhost:4173/?level=0` in a real browser, note SIM-T, and come back after ten minutes. The arm structure must be unchanged from load. If the inner disc has developed a ring or the arms have drifted apart, `ORBIT.pattern` and `eFalloff` are the levers (the pattern is stationary by construction; a visible change means a layer is not on the shared chunk, which is a bug to find, not a value to tune).
 
-- [ ] **Step 4: Social card**
+- [x] **Step 4: Social card**
 
 ```bash
 node scripts/capture-og.mjs
@@ -2384,18 +2388,20 @@ node scripts/capture-og.mjs
 
 Read `public/og.png` and confirm it shows the new look.
 
-- [ ] **Step 5: Docs**
+- [x] **Step 5: Docs**
 
 - Spec: append to "Deviations accepted during the build": attribute names kept (`aRadius`/`aAngle` now mean a and phase); spurs retired; per-instance `aTilt` instead of a material uniform; the `?tone=` and `?exposure=` pins; anything else that changed from the spec during Tasks 1 to 11; the tone-mapping decision.
 - CLAUDE.md bindings: add the round-two spec and plan lines under Bindings, mirroring the round-one entries; note that `scripts/capture-look.mjs` exists for tuning captures.
 - Memory: update `galaxy-fidelity-round.md` in the memory directory with the new state (what shipped, remaining follow-ups, whether Linear was used).
 
-- [ ] **Step 6: Full verification**
+- [x] **Step 6: Full verification**
 
 Run: `npm test && npm run build && npm run e2e`
 Expected: all green on chromium and firefox.
 
 - [ ] **Step 7: Commit and ship**
+
+Push and CI watch performed by the controller after the final review.
 
 ```bash
 git add -A

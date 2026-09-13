@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { ARM_DEFAULTS, createArmModel } from '../src/galaxy/arms'
-import { generateGalaxy, GALAXY_DEFAULTS, PALETTE, paletteAt } from '../src/galaxy/generate'
+import { createArmModel } from '../src/galaxy/arms'
+import {
+  CLUSTER_LUM_FACTOR,
+  GALAXY_DEFAULTS,
+  GIANT_LUM,
+  LUM_FLOOR,
+  LUM_SCALE,
+  PALETTE,
+  generateGalaxy,
+  paletteAt,
+} from '../src/galaxy/generate'
+import { eccentricityAt } from '../src/galaxy/orbit'
 import { mulberry } from './rng'
 
 describe('generateGalaxy', () => {
-  const model = createArmModel(ARM_DEFAULTS, mulberry(1))
+  const model = createArmModel()
   const g = generateGalaxy({ ...GALAXY_DEFAULTS, count: 5000 }, model, mulberry(42))
 
   it('produces buffers sized to count', () => {
@@ -14,6 +24,10 @@ describe('generateGalaxy', () => {
     expect(g.size).toHaveLength(5000)
     expect(g.spike).toHaveLength(5000)
     expect(g.color).toHaveLength(15000)
+  })
+
+  it('carries a per-star eccentricity buffer', () => {
+    expect(g.ecc).toHaveLength(5000)
   })
 
   it('keeps radii within the soft-edge bound (1.2x nominal radius)', () => {
@@ -69,6 +83,59 @@ describe('generateGalaxy', () => {
     }
     expect(spiked).toBeGreaterThan(0)
     expect(spiked / g.spike.length).toBeLessThan(0.1)
+  })
+
+  it('carries per-star eccentricity and luminosity buffers', () => {
+    expect(g.ecc).toHaveLength(5000)
+    expect(g.lum).toHaveLength(5000)
+  })
+
+  it('bulge stars are circular, disc stars follow the eccentricity law', () => {
+    let circular = 0
+    for (let i = 0; i < 5000; i++) {
+      const e = g.ecc[i]
+      expect(e).toBeGreaterThanOrEqual(0)
+      expect(e).toBeLessThanOrEqual(eccentricityAt(0) + 1e-9)
+      if (e === 0) circular++
+    }
+    // the bulge share is circular; everything else has some eccentricity
+    expect(circular / 5000).toBeGreaterThan(GALAXY_DEFAULTS.bulgeFraction * 0.7)
+    expect(circular / 5000).toBeLessThan(GALAXY_DEFAULTS.bulgeFraction * 1.3)
+  })
+
+  it('luminosity spans the floor to the giant boost with giants above 1', () => {
+    let maxLum = 0
+    let dim = 0
+    for (let i = 0; i < 5000; i++) {
+      // Cluster members (giants excepted) dim by CLUSTER_LUM_FACTOR so a
+      // cluster reads as a sparkle of stars rather than one bright smear,
+      // so the effective floor for them sits below LUM_FLOOR.
+      expect(g.lum[i]).toBeGreaterThanOrEqual(LUM_FLOOR * CLUSTER_LUM_FACTOR - 1e-9)
+      expect(g.lum[i]).toBeLessThanOrEqual((LUM_FLOOR + LUM_SCALE) * GIANT_LUM + 1e-9)
+      if (g.spike[i] === 1) expect(g.lum[i]).toBeGreaterThan(1)
+      if (g.lum[i] < 0.3) dim++
+      maxLum = Math.max(maxLum, g.lum[i])
+    }
+    // most stars are faint; that is the depth cue
+    expect(dim / 5000).toBeGreaterThan(0.6)
+    expect(maxLum).toBeGreaterThan(1)
+  })
+
+  it('cluster members share one semi-major axis so they never shear apart', () => {
+    const groups = new Map<number, number>()
+    for (const a of g.radius) groups.set(a, (groups.get(a) ?? 0) + 1)
+    let compact = 0
+    for (const n of groups.values()) if (n >= 20) compact++
+    // max(8, 5000 / 1500) = 8 clusters share 15% of the stars
+    expect(compact).toBeGreaterThanOrEqual(6)
+  })
+
+  it('bulge has a dense core and a wide halo', () => {
+    const core = GALAXY_DEFAULTS.bulgeRadius * GALAXY_DEFAULTS.bulgeCoreSigma * 2
+    let inCore = 0
+    for (let i = 0; i < 5000; i++) if (g.ecc[i] === 0 && g.radius[i] < core) inCore++
+    // the core component alone is bulgeFraction * bulgeCoreShare of all stars
+    expect(inCore / 5000).toBeGreaterThan(GALAXY_DEFAULTS.bulgeFraction * GALAXY_DEFAULTS.bulgeCoreShare * 0.6)
   })
 })
 
