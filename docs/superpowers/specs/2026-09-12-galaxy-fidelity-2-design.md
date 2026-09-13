@@ -500,3 +500,11 @@ the plan's constants table.
   `post.path === 'direct'`. Verified with
   `scripts/capture-look.mjs`'s new `direct` flag: `final-direct-load.png`
   shows individual bulge stars with no flat white disc.
+- Post-merge hotfix (2026-09-12): the camera-clamp e2e test timed out on
+  CI's software GL (30 to 40 mouse steps plus fixed sleeps) and skipped the
+  deploy. Rewritten with six steps per drag, `expect.poll` on the INC
+  telemetry, and `test.slow()`. Two latent defects fixed at the same time:
+  the downward-drag assertion was tautological (INC >= 0) and now asserts
+  INC near 0, and the upward drag started at y = 800 on a 720 px viewport,
+  off canvas, so OrbitControls never saw it; it now starts inside the
+  viewport and asserts the 78 degree clamp is reached.
