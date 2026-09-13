@@ -35,6 +35,7 @@ function init() {
 
   const beacons = createBeacons(NODES)
   beacons.group.renderOrder = RENDER_ORDER.beacons
+  beacons.setViewport(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio)
   sceneCtx.scene.add(beacons.group)
 
   const hud = createHud(
@@ -73,6 +74,10 @@ function init() {
       y: ((1 - v.y) / 2) * innerHeight,
     }
   }
+
+  addEventListener('resize', () => {
+    beacons.setViewport(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio)
+  })
 
   const hint = createHint(document.getElementById('hud')!, new HintModel(safeStorage()))
 

@@ -1,7 +1,6 @@
 import type { ArmModel } from './arms'
 import { clamp01, lerp, makeGauss } from './math'
 import { eccentricityAt, tilt } from './orbit'
-export { orbitalSpeed } from './orbit'
 
 export type Rgb = [number, number, number]
 /** Radial color stops at t = 0, 1/3, 2/3, 1. */
