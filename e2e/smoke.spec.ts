@@ -167,6 +167,21 @@ test('telemetry draw count covers the whole frame on the hdr path', async ({ pag
   await expect.poll(drawCount, { timeout: 5000 }).toBeGreaterThanOrEqual(7)
 })
 
+test('beacon tags label every node on desktop', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  await expect(page.locator('.hud-tag')).toHaveCount(5)
+  await expect(page.locator('.hud-tag', { hasText: 'GH-01' })).toBeVisible()
+})
+
+test('the first-visit hint sits in the lower third', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.hud-hint')).toHaveClass(/open/, { timeout: 5000 })
+  const box = await page.locator('.hud-hint').boundingBox()
+  const height = await page.evaluate(() => innerHeight)
+  expect(box!.y).toBeGreaterThan(height * 0.66)
+})
+
 test('the camera stays at least 12 degrees off the galactic plane', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('#app canvas')).toBeVisible()

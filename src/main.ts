@@ -8,6 +8,7 @@ import { NODES } from './nodes/registry'
 import { createScene, probeGl } from './scene'
 import { wireInteraction } from './interaction'
 import { createHint, HintModel } from './hud/hint'
+import { createTags } from './hud/tags'
 import { safeStorage, withCache } from './data/source'
 import { githubSource } from './data/github'
 import { FpsGovernor, isSoftwareRenderer, LADDER, parseLevelParam, pickInitialLevel } from './quality'
@@ -66,6 +67,13 @@ function init() {
     interaction.clear,
   )
 
+  const tags = createTags(
+    document.getElementById('hud')!,
+    NODES,
+    (id) => beacons.worldPosition(id),
+    () => hud.openId(),
+  )
+
   // e2e hook: screen-space position of a beacon (test-only, allocates)
   window.__nodeScreen = (id: string) => {
     const v = beacons.worldPosition(id).clone().project(sceneCtx.camera)
@@ -100,6 +108,7 @@ function init() {
     rig.update(dt)
     beacons.update(elapsed)
     interaction.update(dt)
+    tags.update(sceneCtx.camera)
     hint.update(wallDt, rig.userActive() || hud.openId() !== null)
     telemetry.setActiveNode(hud.openId())
     telemetry.update(dt, elapsed)

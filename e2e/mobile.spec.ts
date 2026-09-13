@@ -32,3 +32,9 @@ test('identity block and links are present on a small viewport', async ({ page }
     await expect(page.locator('.hud-panel')).toHaveClass(/open/, { timeout: 8000 })
   }
 })
+
+test('beacon tags stay hidden on phones', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  await expect(page.locator('.hud-tag').first()).toBeHidden()
+})
