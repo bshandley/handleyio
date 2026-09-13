@@ -29,7 +29,7 @@
 - The armness peak sits on the ellipse major axis (`cos(2 (psi - tilt))`). A tunable `uArmShift` radians offsets it if the crowding caustic turns out to sit off the apsides on hardware.
 - Pattern speed starts at 0.02 rad/s (one pattern turn in about 314 s; corotation near a = 4.1, so most of the disc overtakes the arms). Tunable in Task 12.
 - `orbitalSpeed()` moves to `orbit.ts` as `omega()`; `generate.ts` re-exports `orbitalSpeed` until Task 6 retires the last importer, then the re-export goes.
-- `dustFade` and its constants stay (safety net); the camera clamp keeps `|sin(elevation)|` at or above sin(12 deg) = 0.208, above `FADE_FULL` (0.18), so it never engages in normal use.
+- `dustFade` and its constants stay (safety net); the camera clamp keeps `|sin(elevation)|` at or above cos(78 deg) = 0.208, above `FADE_FULL` (0.18), so it never engages in normal use.
 - Sim time starts at 0 (`elapsed = 0` in scene.ts). The 160 s pre-wind goes with the material arms.
 
 **Task ordering:** tone spike, orbit mirror, orbit chunk and buffers, stars, glow and bulge, dust, beacons, camera, background, finish grain, HUD, tune and ship. The tone spike lands first so every later layer is judged under the mapper that ships.
@@ -2373,7 +2373,7 @@ Fill the Final column as you go. Every value here is the tuning record for this 
 | `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.85, 0.6 (DUST_ARM untouched; lanes already sat on the concave side, no laneTilt sign flip needed) |
 | `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | 1.8 / 0.55 (untouched; reads well) |
 | `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | 0.5 (untouched) |
-| `MIN_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 12 / 5.5 (untouched) |
+| `MAX_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 78 / 5.5 (whole-branch review: 12/168 forbade the poles, not the plane; single hemisphere clamp, `MIN_DISTANCE` untouched) |
 
 - [x] **Step 3: Ten-minute check**
 

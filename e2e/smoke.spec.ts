@@ -182,26 +182,26 @@ test('the first-visit hint sits in the lower third', async ({ page }) => {
   expect(box!.y).toBeGreaterThan(height * 0.66)
 })
 
-test('the camera stays at least 12 degrees off the galactic plane', async ({ page }) => {
+test('the camera stays above the plane and at least 12 degrees off it', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('#app canvas')).toBeVisible()
   const inclination = async () => {
     const text = await page.locator('.hud-tele-br .hud-tele-line').nth(1).textContent()
     return Number((text ?? '').replace(/\D/g, ''))
   }
-  // drag far downward: the camera rises toward the pole; then far upward: it dives under the plane
+  // drag far downward: the camera rises toward the pole; then far upward: it approaches the plane
   await page.mouse.move(800, 200)
   await page.mouse.down()
   await page.mouse.move(800, 900, { steps: 30 })
   await page.mouse.up()
   await page.waitForTimeout(800)
-  expect(await inclination()).toBeGreaterThanOrEqual(12)
+  expect(await inclination()).toBeGreaterThanOrEqual(0)
   await page.mouse.move(800, 800)
   await page.mouse.down()
   await page.mouse.move(800, 0, { steps: 40 })
   await page.mouse.up()
   await page.waitForTimeout(800)
   const inc = await inclination()
-  expect(inc).toBeGreaterThanOrEqual(12)
-  expect(inc).toBeLessThanOrEqual(168)
+  expect(inc).toBeGreaterThanOrEqual(0)
+  expect(inc).toBeLessThanOrEqual(78)
 })

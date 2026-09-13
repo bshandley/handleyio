@@ -238,11 +238,13 @@ therefore starts at +0000S.
 
 ### Camera (`controls.ts`)
 
-- `minPolarAngle` 12 degrees, `maxPolarAngle` 168 degrees: the camera
-  stays at least 12 degrees off the plane on either side. This is the fix
-  for the white-sheet zoom and for the edge-on view where the y-split
-  cannot render dust. It is a change to the interaction contract round one
-  kept fixed, accepted for this round.
+- `minPolarAngle` 0, `maxPolarAngle` 78 degrees: a single hemisphere above
+  the plane. The polar angle is measured from +Y, so 0 is the pole
+  straight overhead (top-down is allowed) and 78 degrees is the closest
+  the camera comes to the plane, 12 degrees off it. This is the fix for
+  the white-sheet zoom and for the edge-on view where the y-split cannot
+  render dust. It is a change to the interaction contract round one kept
+  fixed, accepted for this round.
 - `minDistance` 4 to 5.5. The breathing zoom's margin logic is unchanged.
 - Everything else (drift, breathing, fly-to, gesture gating) unchanged.
 
@@ -472,3 +474,10 @@ the plan's constants table.
   pose and screenshot) for the ten-minute stability check, since a real
   browser wait was cheaper here than threading a `?simt=` dev pin through
   scene construction.
+- Whole-branch review (Critical): the shipped `minPolarAngle` 12 degrees
+  and `maxPolarAngle` 168 degrees forbade the two caps but still allowed
+  90 degrees, edge-on in the plane, the exact view the clamp exists to
+  prevent; OrbitControls measures the polar angle from +Y, not from the
+  plane. Fixed to a single hemisphere: `minPolarAngle` 0, `maxPolarAngle`
+  78 degrees (`MAX_POLAR_DEG`), so the camera never goes below the plane
+  and stays at least 12 degrees off it, with the top-down view allowed.
