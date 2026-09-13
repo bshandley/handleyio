@@ -12,6 +12,15 @@ const ZOOM_PERIOD_S = 180
 const ZOOM_MARGIN = 0.5 // never dolly closer than minDistance + margin
 const ZOOM_DEPTH = 0.4 // dip at most this fraction of the base distance
 
+// The camera never reaches the galactic plane: near edge-on the additive
+// layers saturate to a white sheet and the far/near star split cannot place
+// the dust correctly. Twelve degrees keeps both problems out of reach.
+export const MIN_POLAR_DEG = 12
+export const MAX_POLAR_DEG = 180 - MIN_POLAR_DEG
+// Closest approach stays outside the nominal disc radius (4.5).
+export const MIN_DISTANCE = 5.5
+export const MAX_DISTANCE = 18
+
 const scratchDir = new Vector3()
 
 export interface CameraRig {
@@ -37,8 +46,10 @@ export function createControls(
   controls.dampingFactor = 0.04
   controls.rotateSpeed = 0.6
   controls.enablePan = false
-  controls.minDistance = 4
-  controls.maxDistance = 18
+  controls.minDistance = MIN_DISTANCE
+  controls.maxDistance = MAX_DISTANCE
+  controls.minPolarAngle = (MIN_POLAR_DEG * Math.PI) / 180
+  controls.maxPolarAngle = (MAX_POLAR_DEG * Math.PI) / 180
   // autoRotate stays on permanently (OrbitControls ignores it mid-drag);
   // drift is shaped by ramping autoRotateSpeed below, so it never snaps.
   controls.autoRotate = !reducedMotion

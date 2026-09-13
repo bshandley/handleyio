@@ -164,3 +164,27 @@ test('telemetry draw count covers the whole frame on the hdr path', async ({ pag
   // pre-change scene was 7 draw calls; the composer's passes push it well past that
   await expect.poll(drawCount, { timeout: 5000 }).toBeGreaterThan(7)
 })
+
+test('the camera stays at least 12 degrees off the galactic plane', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('#app canvas')).toBeVisible()
+  const inclination = async () => {
+    const text = await page.locator('.hud-tele-br .hud-tele-line').nth(1).textContent()
+    return Number((text ?? '').replace(/\D/g, ''))
+  }
+  // drag far downward: the camera rises toward the pole; then far upward: it dives under the plane
+  await page.mouse.move(800, 200)
+  await page.mouse.down()
+  await page.mouse.move(800, 900, { steps: 30 })
+  await page.mouse.up()
+  await page.waitForTimeout(800)
+  expect(await inclination()).toBeGreaterThanOrEqual(12)
+  await page.mouse.move(800, 800)
+  await page.mouse.down()
+  await page.mouse.move(800, 0, { steps: 40 })
+  await page.mouse.up()
+  await page.waitForTimeout(800)
+  const inc = await inclination()
+  expect(inc).toBeGreaterThanOrEqual(12)
+  expect(inc).toBeLessThanOrEqual(168)
+})
