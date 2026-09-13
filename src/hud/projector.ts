@@ -8,11 +8,21 @@ export interface ScreenPos {
   visible: boolean
 }
 
-export function toScreen(pos: Vector3, camera: Camera, width: number, height: number): ScreenPos {
+/** Writes the projected screen position into `out` (no allocation) and returns it. */
+export function toScreenInto(
+  pos: Vector3,
+  camera: Camera,
+  width: number,
+  height: number,
+  out: ScreenPos,
+): ScreenPos {
   v.copy(pos).project(camera)
-  return {
-    x: (v.x * 0.5 + 0.5) * width,
-    y: (-v.y * 0.5 + 0.5) * height,
-    visible: v.z > -1 && v.z < 1,
-  }
+  out.x = (v.x * 0.5 + 0.5) * width
+  out.y = (-v.y * 0.5 + 0.5) * height
+  out.visible = v.z > -1 && v.z < 1
+  return out
+}
+
+export function toScreen(pos: Vector3, camera: Camera, width: number, height: number): ScreenPos {
+  return toScreenInto(pos, camera, width, height, { x: 0, y: 0, visible: false })
 }

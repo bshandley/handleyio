@@ -1,5 +1,5 @@
 import type { Camera, Vector3 } from 'three'
-import { toScreen } from './projector'
+import { toScreenInto, type ScreenPos } from './projector'
 
 // Persistent designation tags beside each beacon: the sector-map framing.
 // Pure rules are exported for tests; DOM work stays in createTags. Writes
@@ -39,14 +39,15 @@ export function createTags(
     el.textContent = tagFor(node)
     el.setAttribute('aria-hidden', 'true')
     root.append(el)
-    return { id: node.id, el, x: NaN, y: NaN, shown: true }
+    const screen: ScreenPos = { x: 0, y: 0, visible: false }
+    return { id: node.id, el, x: NaN, y: NaN, shown: true, screen }
   })
 
   return {
     update(camera) {
       const open = openId()
       for (const entry of entries) {
-        const s = toScreen(position(entry.id), camera, innerWidth, innerHeight)
+        const s = toScreenInto(position(entry.id), camera, innerWidth, innerHeight, entry.screen)
         const visible = tagVisible({ id: entry.id, openId: open, onScreen: s.visible, width: innerWidth })
         if (visible !== entry.shown) {
           entry.el.hidden = !visible

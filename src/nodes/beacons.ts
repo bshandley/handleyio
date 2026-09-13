@@ -104,6 +104,11 @@ export function createBeacons(nodes: GalaxyNode[]): Beacons {
     buffers.alpha[i] = 1
   })
 
+  // Snapshot once at init: update() iterates this array with an index loop
+  // instead of the Map's iterator, so the per-frame orbit walk allocates
+  // nothing. The Map stays for id lookups (pick, worldPosition).
+  const orbitList: Orbit[] = [...orbits.values()]
+
   const uniforms = { ...billboardUniforms(1, 1), uIntensity: { value: BEACON_INTENSITY } }
   uniforms.uNearFade.value = 0.5
   const material = new ShaderMaterial({
@@ -126,7 +131,8 @@ export function createBeacons(nodes: GalaxyNode[]): Beacons {
     },
     update(elapsed) {
       uniforms.uTime.value = elapsed
-      for (const orbit of orbits.values()) {
+      for (let i = 0; i < orbitList.length; i++) {
+        const orbit = orbitList[i]
         orbitPosition(orbit.elements, elapsed, orbit.hit.position)
         orbit.hit.updateMatrixWorld(true)
       }

@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - No em dashes anywhere (code, comments, commits, docs).
-- The render loop allows zero per-frame allocations (repo CLAUDE.md). Per-frame work this plan adds: scalar uniform writes (glow proximity, finish time, beacon time) and five HUD tag transform writes that happen only when a rounded screen position changes.
+- The render loop allows zero per-frame allocations (repo CLAUDE.md). Per-frame work this plan adds: scalar uniform writes (glow proximity, finish time, beacon time) and five HUD tag transform writes that happen only when a rounded screen position changes. Each HUD tag keeps its own `ScreenPos` scratch object (written by `toScreenInto`), and beacons.ts walks a plain `orbitList` array snapshotted from the lookup Map at init, so neither loop allocates (whole-branch review, Important).
 - The orbit curve lives in three places and must stay identical: `ORBIT` constants and functions in `src/galaxy/orbit.ts`, the GLSL `orbitChunk` in `src/galaxy/shaders.ts`, and nowhere else (beacons and generators import `orbit.ts`). A unit test transcribes the GLSL into TypeScript and compares.
 - The no-WebGL fallback HTML in index.html is untouched.
 - Node registry positions are data (world positions at t = 0); galaxy and HUD code never special-case nodes.
