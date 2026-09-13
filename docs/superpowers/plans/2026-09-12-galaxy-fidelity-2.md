@@ -2366,14 +2366,15 @@ Fill the Final column as you go. Every value here is the tuning record for this 
 | `PALETTE` | src/galaxy/generate.ts | round-one values | round-one values (untouched; reads well) |
 | `GLOW_DEFAULTS.bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma / bulgeAlphaScale` | src/galaxy/glow.ts | 0.4 / 0.3 / 2.5 / 0.5 | 0.4 / 0.3 / 1.4 / 0.5 (bulgeAlphaScale untouched; the smaller halo alone tamed the core) |
 | glow bulge y-flatten factor (`* 0.6` in `generateGlow`; not a named param) | src/galaxy/glow.ts | 0.6 | 0.35 (see deviations) |
-| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | 0.85 (raised alongside ARM_LUM for arm/inter-arm contrast) |
+| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | 0.55 (was 0.85 at ship; rework lowered it so inter-arm haze survives the phone rungs) |
 | `PROXIMITY.far / near / min` | src/galaxy/glow.ts | 7.0 / 5.5 / 0.45 | 7.0 / 5.5 / 0.45 (untouched) |
-| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | 0.8, 0.048 (untouched) |
-| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | 0.22 / 0.15 / 0.28 / 2.2 / 0.3 (alphaFloor raised; the layer was confirmed working, just too subtle to read) |
-| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.85, 0.6 (DUST_ARM untouched; lanes already sat on the concave side, no laneTilt sign flip needed) |
+| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | 0.8, 0.07 (rework: alpha raised for the half-count rungs) |
+| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | 0.22 / 0.15 / 0.45 / 2.2 / 0.3 (alphaFloor 0.28 at ship, 0.45 after the rework so lanes read on phones) |
+| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.85, 0.3 (DUST_ARM 0.6 at ship, 0.3 after the rework; lanes sit on the concave side, no laneTilt sign flip needed) |
 | `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | 1.8 / 0.55 (untouched; reads well) |
 | `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | 0.5 (untouched) |
-| `MAX_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 78 / 5.5 (whole-branch review: 12/168 forbade the poles, not the plane; single hemisphere clamp, `MIN_DISTANCE` untouched) |
+| `MAX_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | removed / 4 (rework: Bradley rejected the clamp and the smaller view; round one's limits restored) |
+| `LADDER` glow/dust fractions at levels 2 to 4 (rework) | src/quality.ts | 0.5 / 0.5 | 0.75 / 0.75 |
 | `DIRECT_PATH_SCALE` (new; not in the spec's table) | src/render/post.ts | n/a | 0.4 (whole-branch review: the direct path has no tone mapper, so the layers tuned for the HDR curve clipped the core and giants flat white; `final-direct-load.png` confirmed 0.4 keeps individual bulge stars visible with no flat white disc) |
 
 - [x] **Step 3: Ten-minute check**

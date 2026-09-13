@@ -68,7 +68,7 @@ export const DUST_DEFAULTS: DustParams = {
   clumpFraction: 0.15,
   clumpSizeMin: 0.08,
   clumpSizeMax: 0.16,
-  alphaFloor: 0.28,
+  alphaFloor: 0.45,
   alphaPower: 2.2,
   rotationJitter: 0.3,
 }
@@ -90,7 +90,7 @@ export const ATLAS_ROWS = 2
 export const ELONGATED_FROM = 4
 export const ELONGATED_ASPECT = 2.5
 /** How much of the cloud absorption is confined to the lanes (0 uniform, 1 lanes only). */
-export const DUST_ARM = 0.6
+export const DUST_ARM = 0.3
 
 /**
  * Fades dust absorption to zero near the galactic plane. The far/near star

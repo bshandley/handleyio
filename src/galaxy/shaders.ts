@@ -46,7 +46,7 @@ float orbitArmness(vec3 world, float a, float ecc, float tiltOffset) {
   if (ecc < 0.001) return 0.0;
   float psi = atan(world.z, world.x);
   float w = 0.5 + 0.5 * cos(2.0 * (psi - orbitTilt(a, tiltOffset) - uArmShift));
-  return pow(w, uArmPower);
+  return pow(max(w, 0.0), uArmPower);
 }
 `
 

@@ -74,7 +74,8 @@ describe('generateDust', () => {
       total++
       expect(d.alpha[i]).toBeGreaterThanOrEqual(DUST_DEFAULTS.alphaFloor - 1e-9)
       expect(d.alpha[i]).toBeLessThanOrEqual(1)
-      if (d.alpha[i] < 0.5) thin++
+      // skewed toward the floor: most clouds sit below the midpoint of the range
+      if (d.alpha[i] < DUST_DEFAULTS.alphaFloor + (1 - DUST_DEFAULTS.alphaFloor) / 2) thin++
     }
     expect(thin / total).toBeGreaterThan(0.5)
   })

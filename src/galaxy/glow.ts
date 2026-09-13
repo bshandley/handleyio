@@ -50,7 +50,7 @@ export const GLOW_DEFAULTS: GlowParams = {
   bulgeHaloSigma: 1.4,
   sizeMin: 0.12,
   sizeMax: 0.36,
-  alpha: 0.048,
+  alpha: 0.07,
   // vArm is 0 for bulge instances (e = 0), so bulge alpha is scaled by
   // (1 - GLOW_ARM) = 0.15 in the fragment shader; bulgeAlphaScale is
   // raised to 0.5 to compensate, and the two-component bulge piles up
@@ -62,7 +62,7 @@ export const GLOW_DEFAULTS: GlowParams = {
 export const GLOW_INTENSITY = 0.8
 
 /** How much of the disc haze is confined to the arms (0 uniform, 1 arms only). */
-export const GLOW_ARM = 0.85
+export const GLOW_ARM = 0.55
 /** Camera distance to the origin at which the haze is at full strength / attenuated to `min`. */
 export const PROXIMITY = { far: 7.0, near: 5.5, min: 0.45 }
 
