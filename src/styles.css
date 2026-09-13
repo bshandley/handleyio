@@ -79,6 +79,7 @@ body {
 .hud-panel {
   position: absolute; top: 0; left: 0; width: 230px; padding: 12px 14px;
   pointer-events: auto;
+  z-index: 1;
   background: linear-gradient(160deg, rgba(40, 70, 120, 0.35), rgba(10, 20, 45, 0.55));
   border: 1px solid rgba(140, 190, 255, 0.35); border-radius: 8px;
   backdrop-filter: blur(6px);
@@ -133,7 +134,7 @@ body {
 
 /* Beacon designation tags (desktop only) */
 .hud-tag {
-  position: fixed; left: 0; top: 0; z-index: 2; pointer-events: none; user-select: none;
+  position: fixed; left: 0; top: 0; z-index: 0; pointer-events: none; user-select: none;
   font-size: 9px; letter-spacing: 1.5px; line-height: 1;
   color: rgba(138, 163, 192, 0.7); text-transform: uppercase;
   text-shadow: 0 0 6px rgba(4, 6, 15, 0.9);
