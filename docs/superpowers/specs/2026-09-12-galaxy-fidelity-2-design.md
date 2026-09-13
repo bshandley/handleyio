@@ -533,3 +533,9 @@ the plan's constants table.
   hash, which bands diagonally on Apple GPUs. Gas restored with `GLOW_ARM`
   0.4, glow alpha 0.09, bulge halo sigma 2.0 with y flatten 0.5, and
   `ARM_LUM` 1.0 to soften the hard white ridge.
+- Rework, third pass (Bradley on the preview: gas looked like spheres
+  peppered about; node tags unreadable over the disc): glow sprites now
+  sample the procedural cloud atlas (same builder as the dust, own seed)
+  under a soft radial envelope, with a skewed size range 0.1 to 0.55 and
+  alpha 0.13, so the gas is irregular wisps. Beacon tags sit on a dark
+  translucent pill with a faint accent border and brighter text.

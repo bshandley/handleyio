@@ -136,8 +136,11 @@ body {
 .hud-tag {
   position: fixed; left: 0; top: 0; z-index: 0; pointer-events: none; user-select: none;
   font-size: 9px; letter-spacing: 1.5px; line-height: 1;
-  color: rgba(138, 163, 192, 0.7); text-transform: uppercase;
-  text-shadow: 0 0 6px rgba(4, 6, 15, 0.9);
+  color: rgba(205, 226, 255, 0.92); text-transform: uppercase;
+  /* a dark pill keeps the tag legible over any part of the disc */
+  padding: 3px 6px 2px; border-radius: 3px;
+  background: rgba(4, 6, 15, 0.62);
+  border: 1px solid rgba(140, 192, 255, 0.28);
   will-change: transform;
 }
 .hud-tag[hidden] { display: none; }

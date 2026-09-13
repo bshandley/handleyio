@@ -2368,7 +2368,8 @@ Fill the Final column as you go. Every value here is the tuning record for this 
 | glow bulge y-flatten factor (`* 0.6` in `generateGlow`; not a named param) | src/galaxy/glow.ts | 0.6 | 0.5 (0.35 at ship; rework) |
 | `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | 0.4 (0.85 at ship; the rework lowered it so the inter-arm gas of round one comes back) |
 | `PROXIMITY.far / near / min` | src/galaxy/glow.ts | 7.0 / 5.5 / 0.45 | 7.0 / 5.5 / 0.45 (untouched) |
-| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | 0.8, 0.09 (rework: alpha raised for gas at every rung) |
+| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | 0.8, 0.13 (rework: alpha raised for gas at every rung and again for the cloud-atlas mask) |
+| `GLOW_DEFAULTS.sizeMin / sizeMax` and glow atlas (rework) | src/galaxy/glow.ts | 0.12 / 0.36, gaussian discs | 0.1 / 0.55 with a rand^1.6 size skew; each sprite samples a cell of the procedural cloud atlas (`buildDustAtlas(128, 41)`) under a soft radial envelope, so gas reads as wisps, not spheres |
 | `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | 0.22 / 0.15 / 0.45 / 2.2 / 0.3 (alphaFloor 0.28 at ship, 0.45 after the rework so lanes read on phones) |
 | `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.85, 0.3 (DUST_ARM 0.6 at ship, 0.3 after the rework; lanes sit on the concave side, no laneTilt sign flip needed) |
 | `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | 1.8 / 0.55 (untouched; reads well) |
