@@ -379,4 +379,70 @@ the plan's constants table.
 
 ## Deviations accepted during the build
 
-(recorded as they happen)
+- Tone mapping decision (Task 1 spike): Neutral ships, `AgXToneMapping`
+  stays selectable through the `?tone=` dev pin. Outer arms hold their
+  blue under Neutral and grey out under AgX; the core rolls gold to pale
+  rather than plateauing to a flat, desaturated white. Captures:
+  `agx-085.png`, `neutral-085.png`, `agx-110.png`, `neutral-110.png`
+  (`?tone=agx|neutral&exposure=0.85|1.1`). `?tone=` and `?exposure=` are
+  dev aids only, parsed once at scene construction, not user-facing.
+- Attribute names kept their round-one spelling with a new meaning:
+  `aRadius`/`aAngle` on the star and billboard buffers now carry the
+  ellipse semi-major axis `a` and orbital phase, not a polar radius and
+  angle. Renaming them would have touched every buffer, shader, and test
+  in the galaxy/glow/dust modules for no behavioural gain.
+  `orbitPosition(aRadius, aAngle, aY, aEcc, aTilt)` reads the same
+  arguments as elements plus a per-instance tilt offset.
+- `ArmModel.sample`, `.laneAngle`, and the spur system are retired: the
+  disc, glow, and dust populations now sample a uniform phase directly
+  (`rand() * 2 * Math.PI`) and let the shared orbit chunk's eccentricity
+  and tilt crowd them into arms, instead of the round-one procedural
+  sampling. `ArmModel` is reduced to `{ params, ridgeAngle }`, used only
+  to seed cluster and dust-lane phases at t = 0.
+- Dust lane tilt moved from a shared material uniform to a per-instance
+  `aTilt` billboard attribute, so lane and non-lane dust instances (and,
+  later, any other tilt offset) can share one draw call instead of one
+  per tilt value.
+- `beaconFragment`'s ring term originally computed
+  `pow((len - ringR) * 40.0, 2.0)`, undefined in GLSL ES for a negative
+  base inside the ring radius. Replaced with `float dr = (len - ringR) *
+  40.0; exp(-dr * dr) * (...)`, mathematically identical for all signs of
+  `dr` (found and fixed during Task 7's review).
+- `generateGlow`/`generateDust`'s `model` parameter, unused since the
+  spur system was retired, is named `_model` to satisfy
+  `noUnusedParameters`; position and type are kept for later reuse.
+- Task 12 tuning: the round's headline goal (two arms with no ring-up)
+  needed `ORBIT.eInner` raised from 0.35 to 0.55 and `ORBIT.spin` from
+  0.95 to 1.7; at the starting values the tilt only advanced about 0.6
+  turn across the disc, which crowded into a bar/ellipse rather than a
+  wound spiral. `ARM_LUM` (0.8 to 1.3) and `GLOW_ARM` (0.7 to 0.85) then
+  sharpened the arm/inter-arm brightness contrast on top of the real
+  density crowding.
+- Task 12 tuning: the bulge halo (yellow blobs floating above and around
+  the disc) was a scale problem, not a bug. `bulgeHaloSigma` shrank from
+  2.5 to 1.4 in both `GALAXY_DEFAULTS` and `GLOW_DEFAULTS`, and the glow
+  bulge's hardcoded y-flatten factor in `generateGlow`
+  (`src/galaxy/glow.ts`) dropped from `* 0.6` to `* 0.35` (the star bulge
+  reuses `bulgeFlatten`, already a named param; the glow bulge's flatten
+  was inline and is called out here since it is not in the constants
+  table).
+- Task 12 tuning: star-forming clusters read as flat white blobs because
+  their phase jitter was too tight and their members too bright under
+  additive blending. Cluster phase jitter (`generate.ts`) widened from
+  `gauss() * 0.06` to `gauss() * 0.16`. A new `CLUSTER_LUM_FACTOR = 0.6`
+  dims non-giant cluster members so a cluster reads as a sparkle of stars
+  rather than one bright smear; giants inside a cluster keep full
+  brightness. This constant is not in the spec's table; it lives next to
+  `BRIGHT_GIANT_CUTOFF` in `generate.ts`.
+- Task 12 tuning: dust lanes were invisible at the round's starting
+  values, not because of a bug. Forcing `DUST_ABSORB` to 1.0 and
+  `alphaFloor` to 0.6 confirmed the layer draws, in the correct place
+  (concave side of the arm ridge, no `laneTilt` sign flip needed).
+  Shipped values split the difference: `DUST_ABSORB` 0.65 to 0.85,
+  `alphaFloor` 0.15 to 0.28.
+- `scripts/capture-look.mjs` gained a `top` pose (drags the camera up over
+  the disc to judge the spiral from overhead) and an optional fourth
+  `waitSeconds` argument (waits that long, sim time included, before the
+  pose and screenshot) for the ten-minute stability check, since a real
+  browser wait was cheaper here than threading a `?simt=` dev pin through
+  scene construction.

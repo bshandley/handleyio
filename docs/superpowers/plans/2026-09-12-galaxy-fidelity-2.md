@@ -2351,26 +2351,29 @@ Fill the Final column as you go. Every value here is the tuning record for this 
 
 | Constant | File | Starting value | Final |
 |---|---|---|---|
-| `TONE_MAPPER` (Task 1 spike; note capture names and the reason) | src/render/post.ts | agx | |
-| `EXPOSURE` | src/render/post.ts | 0.85 | |
-| `BLOOM.strength / radius / threshold` | src/render/post.ts | 0.3 / 0.6 / 1.0 | |
-| `GRAIN` | src/render/post.ts | 1.5 | |
-| `ORBIT.spin / wobble / pattern / eInner / eFalloff` | src/galaxy/orbit.ts | 0.95 / 0.1 / 0.02 / 0.35 / 0.5 | |
-| `ARM_POWER / ARM_SHIFT` | src/galaxy/shaders.ts | 3.0 / 0.0 | |
-| `STAR_INTENSITY` | src/galaxy/galaxy.ts | 0.6 | |
-| `ARM_LUM / ARM_BLUE / TWINKLE` | src/galaxy/galaxy.ts | 0.8 / 0.6 / 0.15 | |
-| `LUM_FLOOR / LUM_SCALE / GIANT_LUM` | src/galaxy/generate.ts | 0.15 / 1.0 / 3.0 | |
-| `GALAXY_DEFAULTS.bulgeFraction / bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma` | src/galaxy/generate.ts | 0.12 / 0.35 / 0.3 / 2.5 | |
-| `PALETTE` | src/galaxy/generate.ts | round-one values | |
-| `GLOW_DEFAULTS.bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma / bulgeAlphaScale` | src/galaxy/glow.ts | 0.4 / 0.3 / 2.5 / 0.5 | |
-| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | |
-| `PROXIMITY.far / near / min` | src/galaxy/glow.ts | 7.0 / 5.5 / 0.45 | |
-| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | |
-| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | |
-| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | |
-| `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | |
-| `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | |
-| `MIN_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | |
+| `TONE_MAPPER` (Task 1 spike; note capture names and the reason) | src/render/post.ts | agx | neutral (Task 1 spike: agx-085/neutral-085/agx-110/neutral-110 captures; outer arms hold blue and the core rolls gold to pale under Neutral, grey/plateau under AgX) |
+| `EXPOSURE` | src/render/post.ts | 0.85 | 0.85 (untouched) |
+| `BLOOM.strength / radius / threshold` | src/render/post.ts | 0.3 / 0.6 / 1.0 | 0.3 / 0.6 / 1.0 (untouched; reads well) |
+| `GRAIN` | src/render/post.ts | 1.5 | 1.5 (untouched) |
+| `ORBIT.spin / wobble / pattern / eInner / eFalloff` | src/galaxy/orbit.ts | 0.95 / 0.1 / 0.02 / 0.35 / 0.5 | 1.7 / 0.1 / 0.02 / 0.55 / 0.5 (spin and eInner were the headline fix for the no-spiral problem; wobble/pattern/eFalloff untouched) |
+| `ARM_POWER / ARM_SHIFT` | src/galaxy/shaders.ts | 3.0 / 0.0 | 3.0 / 0.0 (untouched; the spiral read clearly once spin/eInner/ARM_LUM/GLOW_ARM moved) |
+| `STAR_INTENSITY` | src/galaxy/galaxy.ts | 0.6 | 0.6 (untouched) |
+| `ARM_LUM / ARM_BLUE / TWINKLE` | src/galaxy/galaxy.ts | 0.8 / 0.6 / 0.15 | 1.3 / 0.6 / 0.15 (ARM_LUM raised to sharpen arm/inter-arm contrast) |
+| `LUM_FLOOR / LUM_SCALE / GIANT_LUM` | src/galaxy/generate.ts | 0.15 / 1.0 / 3.0 | 0.15 / 1.0 / 3.0 (untouched) |
+| `CLUSTER_LUM_FACTOR` (new; not in the spec's table) | src/galaxy/generate.ts | n/a | 0.6 (dims non-giant cluster members so a cluster reads as a sparkle, not a smear; see deviations) |
+| cluster phase jitter (`gauss() * 0.06` in `generateGalaxy`) | src/galaxy/generate.ts | 0.06 | 0.16 (clusters were compact flat blobs; widened per the tuning notes' 0.12-0.2 range) |
+| `GALAXY_DEFAULTS.bulgeFraction / bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma` | src/galaxy/generate.ts | 0.12 / 0.35 / 0.3 / 2.5 | 0.12 / 0.35 / 0.3 / 1.4 (halo shrunk to kill the floating yellow blobs; kept in step with GLOW_DEFAULTS) |
+| `PALETTE` | src/galaxy/generate.ts | round-one values | round-one values (untouched; reads well) |
+| `GLOW_DEFAULTS.bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma / bulgeAlphaScale` | src/galaxy/glow.ts | 0.4 / 0.3 / 2.5 / 0.5 | 0.4 / 0.3 / 1.4 / 0.5 (bulgeAlphaScale untouched; the smaller halo alone tamed the core) |
+| glow bulge y-flatten factor (`* 0.6` in `generateGlow`; not a named param) | src/galaxy/glow.ts | 0.6 | 0.35 (see deviations) |
+| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | 0.85 (raised alongside ARM_LUM for arm/inter-arm contrast) |
+| `PROXIMITY.far / near / min` | src/galaxy/glow.ts | 7.0 / 5.5 / 0.45 | 7.0 / 5.5 / 0.45 (untouched) |
+| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | 0.8, 0.048 (untouched) |
+| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | 0.22 / 0.15 / 0.28 / 2.2 / 0.3 (alphaFloor raised; the layer was confirmed working, just too subtle to read) |
+| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.85, 0.6 (DUST_ARM untouched; lanes already sat on the concave side, no laneTilt sign flip needed) |
+| `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | 1.8 / 0.55 (untouched; reads well) |
+| `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | 0.5 (untouched) |
+| `MIN_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 12 / 5.5 (untouched) |
 
 - [ ] **Step 3: Ten-minute check**
 
