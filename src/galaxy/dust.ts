@@ -174,6 +174,10 @@ export function buildDustAtlas(cellSize = 256, seed = 1): CanvasTexture | null {
   texture.minFilter = LinearFilter
   texture.magFilter = LinearFilter
   texture.generateMipmaps = false
+  // CanvasTexture defaults flipY true, which samples canvas row 0 (the
+  // round cells) at v in [0.5, 1] while the fragment maps cell 0-3 to
+  // v in [0, 0.5]; keep the atlas rows aligned with the fragment's mapping.
+  texture.flipY = false
   return texture
 }
 

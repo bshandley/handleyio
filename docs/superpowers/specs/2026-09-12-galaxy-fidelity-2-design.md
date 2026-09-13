@@ -481,3 +481,10 @@ the plan's constants table.
   plane. Fixed to a single hemisphere: `minPolarAngle` 0, `maxPolarAngle`
   78 degrees (`MAX_POLAR_DEG`), so the camera never goes below the plane
   and stays at least 12 degrees off it, with the top-down view allowed.
+- Whole-branch review (Important): dust atlas rows were sampled inverted
+  during tuning. `buildDustAtlas`'s `CanvasTexture` defaults to `flipY =
+  true`, so canvas row 0 (the round clump cells) sampled at v in [0.5, 1]
+  while the fragment maps cells 0-3 to v in [0, 0.5]; round and elongated
+  rows were swapped, so clumps rendered elongated and clouds rendered
+  round. Fixed with `texture.flipY = false`; clump look re-checked
+  before merge.
