@@ -8,6 +8,8 @@ const page = await browser.newPage({ viewport: { width: 1200, height: 630 } })
 // The capture never depends on the network: stub the live GitHub data so a
 // rate limit or an offline run can't change the card.
 await page.route('https://api.github.com/**', (route) => route.fulfill({ json: [] }))
+// The first-visit hint must not appear on the social card.
+await page.addInitScript(() => localStorage.setItem('handleyio:hint-seen', '1'))
 // Pin level 0: headless Chromium otherwise starts at a lower quality level
 // and the governor steps it down further within seconds, since software GL
 // is slow, so an unpinned capture would show a degraded scene.
