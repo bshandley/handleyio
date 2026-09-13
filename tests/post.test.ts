@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { finishShader, hdrSupported } from '../src/render/post'
+import { finishShader, GRAIN, hdrSupported } from '../src/render/post'
 import { parseExposureParam, parseToneParam, TONE_MAPPER } from '../src/render/post'
 
 describe('hdrSupported', () => {
@@ -16,6 +16,13 @@ describe('finishShader', () => {
   it('samples tDiffuse and exposes the vignette uniform', () => {
     expect(finishShader.uniforms.uVignette.value).toBeGreaterThan(0)
     expect(finishShader.fragmentShader).toContain('tDiffuse')
+  })
+
+  it('carries animated grain that lives in the shadows', () => {
+    expect(finishShader.uniforms.uGrain.value).toBe(GRAIN)
+    expect(finishShader.uniforms.uTime.value).toBe(0)
+    expect(finishShader.fragmentShader).toContain('uGrain')
+    expect(finishShader.fragmentShader).toContain('luma')
   })
 })
 

@@ -153,6 +153,7 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
     glow.setProximity(camera.position.length())
     for (const cb of frameCbs) cb(dt, elapsed)
     renderer.info.reset()
+    post.setTime(reducedMotion ? 0 : elapsed)
     post.render()
     window.__frameCount = (window.__frameCount ?? 0) + 1
   }
