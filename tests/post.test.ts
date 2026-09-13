@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DIRECT_PATH_SCALE, finishShader, GRAIN, hdrSupported } from '../src/render/post'
-import { parseExposureParam, parseToneParam, TONE_MAPPER } from '../src/render/post'
+import { finishShader, hdrSupported } from '../src/render/post'
 
 describe('hdrSupported', () => {
   it('is false without float color buffers', () => {
@@ -16,39 +15,5 @@ describe('finishShader', () => {
   it('samples tDiffuse and exposes the vignette uniform', () => {
     expect(finishShader.uniforms.uVignette.value).toBeGreaterThan(0)
     expect(finishShader.fragmentShader).toContain('tDiffuse')
-  })
-
-  it('carries animated grain that lives in the shadows', () => {
-    expect(finishShader.uniforms.uGrain.value).toBe(GRAIN)
-    expect(finishShader.uniforms.uTime.value).toBe(0)
-    expect(finishShader.fragmentShader).toContain('uGrain')
-    expect(finishShader.fragmentShader).toContain('luma')
-  })
-})
-
-describe('tone pin', () => {
-  it('parses the tone mapper name and ignores anything else', () => {
-    expect(parseToneParam('?tone=neutral')).toBe('neutral')
-    expect(parseToneParam('?tone=agx')).toBe('agx')
-    expect(parseToneParam('?tone=filmic')).toBeNull()
-    expect(parseToneParam('')).toBeNull()
-  })
-
-  it('parses a finite positive exposure', () => {
-    expect(parseExposureParam('?exposure=1.2')).toBe(1.2)
-    expect(parseExposureParam('?exposure=0')).toBeNull()
-    expect(parseExposureParam('?exposure=abc')).toBeNull()
-    expect(parseExposureParam('?level=0')).toBeNull()
-  })
-
-  it('ships one of the two mappers', () => {
-    expect(['agx', 'neutral']).toContain(TONE_MAPPER)
-  })
-})
-
-describe('direct path scale', () => {
-  it('dims the layers rather than brightening or leaving them unchanged', () => {
-    expect(DIRECT_PATH_SCALE).toBeGreaterThan(0)
-    expect(DIRECT_PATH_SCALE).toBeLessThan(1)
   })
 })

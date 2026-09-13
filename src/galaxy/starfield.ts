@@ -13,9 +13,7 @@ import { starProfileChunk } from './shaders'
 // temperature mix (mostly white and blue-white, a minority orange), and a
 // handful of bright foreground stars with diffraction spikes.
 
-export const STARFIELD_COUNT = 7000
-export const STARFIELD_BRIGHT = 24
-export const STARFIELD_INTENSITY = 0.5
+export const STARFIELD_INTENSITY = 0.6
 
 export interface StarfieldBuffers {
   position: Float32Array
@@ -56,7 +54,7 @@ export function generateStarfield(
 
     const bright = i < brightCount
     // screen-space pixels at pixel ratio 1
-    size[i] = bright ? 3.5 + rand() * 1.5 : 0.4 + Math.pow(rand(), 6) * 2.2
+    size[i] = bright ? 3.5 + rand() * 1.5 : 0.6 + Math.pow(rand(), 5) * 2.4
     spike[i] = bright ? 1 : 0
   }
   return { position, color, size, spike }
@@ -101,8 +99,8 @@ export interface Starfield {
 
 export function createStarfield(
   pixelRatio = 1,
-  count = STARFIELD_COUNT,
-  brightCount = STARFIELD_BRIGHT,
+  count = 2500,
+  brightCount = 24,
   rand: () => number = Math.random,
 ): Starfield {
   const s = generateStarfield(count, brightCount, rand)

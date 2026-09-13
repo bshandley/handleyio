@@ -42,9 +42,4 @@ describe('node registry', () => {
   it('linkedin panel carries the headline', () => {
     expect(nodeById('linkedin').lines).toEqual(['Bradley Handley', 'Cloud security leader'])
   })
-
-  it('every node has a short tag for the sector map', () => {
-    for (const n of NODES) expect(n.tag).toMatch(/^[A-Z]{2}-\d\d$/)
-    expect(new Set(NODES.map((n) => n.tag)).size).toBe(NODES.length)
-  })
 })

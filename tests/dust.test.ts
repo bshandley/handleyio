@@ -1,22 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { createArmModel } from '../src/galaxy/arms'
+import { ARM_DEFAULTS, createArmModel } from '../src/galaxy/arms'
 import {
-  ATLAS_CELLS,
   buildDustAtlas,
   createDust,
   DUST_DEFAULTS,
   dustFade,
-  ELONGATED_FROM,
   FADE_FULL,
   FADE_START,
   generateDust,
 } from '../src/galaxy/dust'
-import { eccentricityAt } from '../src/galaxy/orbit'
 import { RENDER_ORDER } from '../src/galaxy/order'
 import { mulberry } from './rng'
 
 describe('generateDust', () => {
-  const model = createArmModel()
+  const model = createArmModel(ARM_DEFAULTS, mulberry(1))
   const d = generateDust({ ...DUST_DEFAULTS, count: 2000 }, model, mulberry(11))
 
   it('keeps the bulge dust-free and stays inside the disc', () => {
@@ -26,79 +23,47 @@ describe('generateDust', () => {
     }
   })
 
-  it('uses all eight atlas cells, clumps only the round ones', () => {
+  it('uses the four atlas cells', () => {
     const seen = new Set<number>()
-    for (let i = 0; i < 2000; i++) {
-      const s = d.shape[i]
+    for (const s of d.shape) {
       expect(Number.isInteger(s)).toBe(true)
       expect(s).toBeGreaterThanOrEqual(0)
-      expect(s).toBeLessThan(ATLAS_CELLS)
+      expect(s).toBeLessThan(4)
       seen.add(s)
-      if (d.size[i] <= DUST_DEFAULTS.clumpSizeMax && d.tilt[i] === 0 && d.alpha[i] >= 0.9) {
-        expect(s).toBeLessThan(ELONGATED_FROM)
+    }
+    expect(seen.size).toBe(4)
+  })
+
+  it('puts most instances on the arm lanes', () => {
+    let onLane = 0
+    for (let i = 0; i < d.radius.length; i++) {
+      const r = d.radius[i]
+      let best = Infinity
+      for (let arm = 0; arm < ARM_DEFAULTS.arms; arm++) {
+        const lane = model.laneAngle(arm, r, DUST_DEFAULTS.laneOffset)
+        const delta = Math.atan2(Math.sin(d.angle[i] - lane), Math.cos(d.angle[i] - lane))
+        best = Math.min(best, Math.abs(delta))
       }
+      if (best < 0.25) onLane++
     }
-    expect(seen.size).toBe(ATLAS_CELLS)
+    expect(onLane / d.radius.length).toBeGreaterThan(DUST_DEFAULTS.laneFraction * 0.8)
   })
 
-  it('lane instances carry the concave-side tilt and the eccentricity law', () => {
-    let lanes = 0
-    for (let i = 0; i < 2000; i++) {
-      expect(d.ecc[i]).toBeCloseTo(eccentricityAt(d.radius[i]), 6)
-      // buffers are Float32Array: compare with a tolerance, never ===
-      if (Math.abs(d.tilt[i] + DUST_DEFAULTS.laneTilt) < 1e-6) lanes++
-      else expect(d.tilt[i]).toBe(0)
-    }
-    expect(lanes / 2000).toBeGreaterThan(DUST_DEFAULTS.laneFraction * 0.8)
-  })
-
-  it('has a dark clump population: small, dense, on the ridge', () => {
-    let clumps = 0
-    for (let i = 0; i < 2000; i++) {
-      if (d.size[i] <= DUST_DEFAULTS.clumpSizeMax) {
-        clumps++
-        expect(d.size[i]).toBeGreaterThanOrEqual(DUST_DEFAULTS.clumpSizeMin)
-        expect(d.alpha[i]).toBeGreaterThanOrEqual(0.9)
-        expect(d.tilt[i]).toBe(0)
-      }
-    }
-    expect(clumps / 2000).toBeGreaterThan(DUST_DEFAULTS.clumpFraction * 0.7)
-    expect(clumps / 2000).toBeLessThan(DUST_DEFAULTS.clumpFraction * 1.3)
-  })
-
-  it('cloud opacity is skewed thin with a floor', () => {
-    let thin = 0
-    let total = 0
-    for (let i = 0; i < 2000; i++) {
-      if (d.size[i] <= DUST_DEFAULTS.clumpSizeMax) continue
-      total++
-      expect(d.alpha[i]).toBeGreaterThanOrEqual(DUST_DEFAULTS.alphaFloor - 1e-9)
-      expect(d.alpha[i]).toBeLessThanOrEqual(1)
-      if (d.alpha[i] < 0.5) thin++
-    }
-    expect(thin / total).toBeGreaterThan(0.5)
-  })
-
-  it('is thin in y with small rotation jitter', () => {
-    for (let i = 0; i < 2000; i++) {
-      expect(Math.abs(d.y[i])).toBeLessThan(DUST_DEFAULTS.thickness * 1.5)
-      expect(Math.abs(d.rotation[i])).toBeLessThanOrEqual(DUST_DEFAULTS.rotationJitter + 1e-6)
-    }
+  it('is thin in y', () => {
+    for (const y of d.y) expect(Math.abs(y)).toBeLessThan(DUST_DEFAULTS.thickness * 1.5)
   })
 })
 
 describe('createDust', () => {
   it('builds a mesh in the dust render slot; atlas is null without a document', () => {
     expect(buildDustAtlas()).toBeNull()
-    const model = createArmModel()
+    const model = createArmModel(ARM_DEFAULTS, mulberry(1))
     const layer = createDust(model, 800, 600, { count: 100 }, mulberry(2))
     expect(layer.mesh.renderOrder).toBe(RENDER_ORDER.dust)
     layer.setFraction(0.25)
     expect(layer.mesh.geometry.instanceCount).toBe(25)
     layer.setFade(0.5)
     expect(layer.mesh.material.uniforms.uFade.value).toBe(0.5)
-    expect(layer.mesh.material.uniforms.uAlign.value).toBe(1)
-    expect(layer.mesh.material.uniforms.uDustArm.value).toBeGreaterThan(0)
     layer.dispose()
   })
 })

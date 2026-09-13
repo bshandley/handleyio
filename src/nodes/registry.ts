@@ -10,8 +10,6 @@ export interface GalaxyNode {
   lines: string[]
   actions: NodeAction[]
   dataSourceId?: string
-  /** Short persistent label drawn beside the beacon on desktop (sector-map tag). */
-  tag?: string
 }
 
 export const NODES: GalaxyNode[] = [
@@ -23,7 +21,6 @@ export const NODES: GalaxyNode[] = [
     lines: ['github.com/bshandley'],
     actions: [{ label: 'Open ↗', kind: 'open', href: 'https://github.com/bshandley' }],
     dataSourceId: 'github',
-    tag: 'GH-01',
   },
   {
     id: 'email',
@@ -35,7 +32,6 @@ export const NODES: GalaxyNode[] = [
       { label: 'Copy', kind: 'copy', text: 'hello@handley.io' },
       { label: 'Compose ↗', kind: 'open', href: 'mailto:hello@handley.io' },
     ],
-    tag: 'EM-02',
   },
   {
     id: 'linkedin',
@@ -46,7 +42,6 @@ export const NODES: GalaxyNode[] = [
     actions: [
       { label: 'Open ↗', kind: 'open', href: 'https://www.linkedin.com/in/bshandley/' },
     ],
-    tag: 'LI-03',
   },
   {
     id: 'pliny',
@@ -55,7 +50,6 @@ export const NODES: GalaxyNode[] = [
     position: [1.8, -0.2, -1.9],
     lines: ['getpliny.com', 'Self-hosted kanban board'],
     actions: [{ label: 'Open ↗', kind: 'open', href: 'https://getpliny.com' }],
-    tag: 'PL-04',
   },
   {
     id: 'gatehouse',
@@ -64,7 +58,6 @@ export const NODES: GalaxyNode[] = [
     position: [-3.2, 0.15, -0.8],
     lines: ['gatehouse.to', 'Agent secrets vault'],
     actions: [{ label: 'Open ↗', kind: 'open', href: 'https://gatehouse.to' }],
-    tag: 'GT-05',
   },
 ]
 

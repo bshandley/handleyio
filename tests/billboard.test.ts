@@ -6,7 +6,6 @@ import {
   createBillboardGeometry,
   setInstanceFraction,
 } from '../src/galaxy/billboard'
-import { ORBIT } from '../src/galaxy/orbit'
 
 describe('billboard geometry', () => {
   const buffers = allocBillboards(10)
@@ -41,26 +40,5 @@ describe('billboard geometry', () => {
     expect(u.uViewport.value.x).toBe(800)
     expect(u.uMaxPx.value).toBe(300)
     expect(u.uOrbit.value).toBe(1)
-  })
-
-  it('carries eccentricity and tilt per instance', () => {
-    expect(buffers.ecc).toHaveLength(10)
-    expect(buffers.tilt).toHaveLength(10)
-    expect(geometry.attributes.aEcc.count).toBe(10)
-    expect(geometry.attributes.aTilt.count).toBe(10)
-  })
-
-  it('vertex shader takes the ellipse arguments and can align to the orbit tangent', () => {
-    expect(billboardVertex).toContain('orbitPosition(aRadius, aAngle, aY, aEcc, aTilt)')
-    expect(billboardVertex).toContain('orbitTangent(')
-    expect(billboardVertex).toContain('uAlign')
-    expect(billboardVertex).toContain('vArm')
-  })
-
-  it('uniform set carries the orbit constants', () => {
-    const u = billboardUniforms(800, 600)
-    expect(u.uSpin.value).toBe(ORBIT.spin)
-    expect(u.uPattern.value).toBeGreaterThan(0)
-    expect(u.uAlign.value).toBe(0)
   })
 })

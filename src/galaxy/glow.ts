@@ -1,4 +1,4 @@
-import { AdditiveBlending, InstancedBufferGeometry, Mesh, ShaderMaterial, Vector3 } from 'three'
+import { AdditiveBlending, InstancedBufferGeometry, Mesh, ShaderMaterial } from 'three'
 import type { ArmModel } from './arms'
 import {
   allocBillboards,
@@ -10,7 +10,6 @@ import {
 } from './billboard'
 import { PALETTE, paletteAt, type Palette } from './generate'
 import { lerp, makeGauss } from './math'
-import { eccentricityAt } from './orbit'
 import { RENDER_ORDER } from './order'
 
 // Unresolved light: a few thousand small, dim, soft sprites following the
@@ -25,12 +24,6 @@ export interface GlowParams {
   thickness: number
   bulgeRadius: number
   bulgeFraction: number
-  /** Share of bulge haze in the compact core component. */
-  bulgeCoreShare: number
-  /** Core sigma as a fraction of bulgeRadius. */
-  bulgeCoreSigma: number
-  /** Halo sigma as a fraction of bulgeRadius; the tails that spill into the disc. */
-  bulgeHaloSigma: number
   sizeMin: number
   sizeMax: number
   alpha: number
@@ -45,26 +38,14 @@ export const GLOW_DEFAULTS: GlowParams = {
   thickness: 0.35,
   bulgeRadius: 0.55,
   bulgeFraction: 0.25,
-  bulgeCoreShare: 0.4,
-  bulgeCoreSigma: 0.3,
-  bulgeHaloSigma: 1.4,
   sizeMin: 0.12,
   sizeMax: 0.36,
   alpha: 0.048,
-  // vArm is 0 for bulge instances (e = 0), so bulge alpha is scaled by
-  // (1 - GLOW_ARM) = 0.15 in the fragment shader; bulgeAlphaScale is
-  // raised to 0.5 to compensate, and the two-component bulge piles up
-  // less than the old single gaussian.
-  bulgeAlphaScale: 0.5,
+  bulgeAlphaScale: 0.2,
   palette: PALETTE,
 }
 
 export const GLOW_INTENSITY = 0.8
-
-/** How much of the disc haze is confined to the arms (0 uniform, 1 arms only). */
-export const GLOW_ARM = 0.85
-/** Camera distance to the origin at which the haze is at full strength / attenuated to `min`. */
-export const PROXIMITY = { far: 7.0, near: 5.5, min: 0.45 }
 
 // Haze radial law, matching the star law in generate.ts: an exponent above 1
 // piled sprites just outside the floor and clipped the inner disc, so this one
@@ -74,12 +55,12 @@ const GLOW_EXPONENT = 0.9
 
 export function generateGlow(
   p: GlowParams,
-  // Unused until arm crowding drives glow placement (Task 4).
-  _model: ArmModel,
+  model: ArmModel,
   rand: () => number = Math.random,
 ): BillboardBuffers {
   const b = allocBillboards(p.count)
   const gauss = makeGauss(rand)
+  const arms = model.params.arms
 
   for (let i = 0; i < p.count; i++) {
     const inBulge = rand() < p.bulgeFraction
@@ -88,22 +69,20 @@ export function generateGlow(
     let yy: number
     let color: [number, number, number]
     if (inBulge) {
-      const sigma = rand() < p.bulgeCoreShare ? p.bulgeCoreSigma : p.bulgeHaloSigma
-      const gx = gauss() * 2 * p.bulgeRadius * sigma
-      const gz = gauss() * 2 * p.bulgeRadius * sigma
+      const gx = gauss() * 2 * p.bulgeRadius * 1.3
+      const gz = gauss() * 2 * p.bulgeRadius * 1.3
       r = Math.hypot(gx, gz)
       a = Math.atan2(gz, gx)
-      yy = gauss() * 2 * p.bulgeRadius * sigma * 0.35
+      yy = gauss() * 2 * p.bulgeRadius * 0.6
       color = p.palette[0]
     } else {
       r = (GLOW_FLOOR + (1 - GLOW_FLOOR) * Math.pow(rand(), GLOW_EXPONENT)) * p.radius
       const t = r / p.radius
-      a = rand() * Math.PI * 2
+      a = model.sample(i % arms, r, t, rand, gauss)
       yy = gauss() * p.thickness * (1.0 - 0.6 * t)
       color = paletteAt(p.palette, t)
     }
     r = Math.min(1.2 * p.radius, r)
-    b.ecc[i] = inBulge ? 0 : eccentricityAt(r)
     b.radius[i] = r
     b.angle[i] = a
     b.y[i] = yy
@@ -120,21 +99,15 @@ export function generateGlow(
 
 const glowFragment = /* glsl */ `
 uniform float uIntensity;
-uniform float uGlowArm;
-uniform float uProximity;
-uniform vec3 uProxLaw; // far, near, min
 varying vec2 vUv;
 varying vec3 vColor;
 varying float vAlpha;
-varying float vArm;
 
 void main() {
   vec2 d = (vUv - 0.5) * 2.0;
   float r2 = dot(d, d);
   float a = exp(-r2 * 3.0) * (1.0 - smoothstep(0.6, 1.0, r2));
-  float arm = mix(1.0 - uGlowArm, 1.0, vArm);
-  float prox = mix(uProxLaw.z, 1.0, smoothstep(uProxLaw.y, uProxLaw.x, uProximity));
-  gl_FragColor = vec4(vColor * uIntensity, a * vAlpha * arm * prox);
+  gl_FragColor = vec4(vColor * uIntensity, a * vAlpha);
 }
 `
 
@@ -144,9 +117,6 @@ export interface GlowLayer {
   /** Drawing-buffer pixels. */
   setViewport(width: number, height: number): void
   setFraction(fraction: number): void
-  /** Camera distance to the origin; attenuates the haze as the camera closes in. */
-  setProximity(distance: number): void
-  setIntensity(value: number): void
   dispose(): void
 }
 
@@ -158,13 +128,7 @@ export function createGlow(
   rand: () => number = Math.random,
 ): GlowLayer {
   const params = { ...GLOW_DEFAULTS, ...overrides }
-  const uniforms = {
-    ...billboardUniforms(width, height),
-    uIntensity: { value: GLOW_INTENSITY },
-    uGlowArm: { value: GLOW_ARM },
-    uProximity: { value: PROXIMITY.far },
-    uProxLaw: { value: new Vector3(PROXIMITY.far, PROXIMITY.near, PROXIMITY.min) },
-  }
+  const uniforms = { ...billboardUniforms(width, height), uIntensity: { value: GLOW_INTENSITY } }
   const material = new ShaderMaterial({
     vertexShader: billboardVertex,
     fragmentShader: glowFragment,
@@ -189,12 +153,6 @@ export function createGlow(
     },
     setFraction(fraction) {
       setInstanceFraction(geometry, fraction)
-    },
-    setProximity(distance) {
-      uniforms.uProximity.value = distance
-    },
-    setIntensity(value) {
-      uniforms.uIntensity.value = value
     },
     dispose() {
       geometry.dispose()

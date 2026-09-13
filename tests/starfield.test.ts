@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createStarfield, generateStarfield, STARFIELD_BRIGHT, STARFIELD_COUNT } from '../src/galaxy/starfield'
+import { createStarfield, generateStarfield } from '../src/galaxy/starfield'
 import { RENDER_ORDER } from '../src/galaxy/order'
 import { mulberry } from './rng'
 
@@ -44,19 +44,6 @@ describe('generateStarfield', () => {
     }
     expect(orange).toBeGreaterThan(50)
     expect(blue).toBeGreaterThan(100)
-  })
-
-  it('most background stars are sub-pixel', () => {
-    let small = 0
-    for (let i = 20; i < 1000; i++) if (s.size[i] < 1) small++
-    expect(small / 980).toBeGreaterThan(0.75)
-  })
-})
-
-describe('starfield defaults', () => {
-  it('ships a dense field with a couple dozen bright stars', () => {
-    expect(STARFIELD_COUNT).toBe(7000)
-    expect(STARFIELD_BRIGHT).toBe(24)
   })
 })
 

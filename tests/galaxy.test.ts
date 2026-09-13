@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createArmModel } from '../src/galaxy/arms'
+import { ARM_DEFAULTS, createArmModel } from '../src/galaxy/arms'
 import { createGalaxy } from '../src/galaxy/galaxy'
 import { RENDER_ORDER } from '../src/galaxy/order'
 import { mulberry } from './rng'
 
 describe('galaxy split', () => {
-  const model = createArmModel()
+  const model = createArmModel(ARM_DEFAULTS, mulberry(1))
   const galaxy = createGalaxy(model, { count: 2000 }, 1, mulberry(2))
 
   it('covers every star across the below and above draw ranges', () => {

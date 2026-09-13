@@ -79,7 +79,6 @@ body {
 .hud-panel {
   position: absolute; top: 0; left: 0; width: 230px; padding: 12px 14px;
   pointer-events: auto;
-  z-index: 1;
   background: linear-gradient(160deg, rgba(40, 70, 120, 0.35), rgba(10, 20, 45, 0.55));
   border: 1px solid rgba(140, 190, 255, 0.35); border-radius: 8px;
   backdrop-filter: blur(6px);
@@ -132,19 +131,6 @@ body {
 .hud-corner-bl { bottom: 8px; left: 8px; border-bottom-width: 1px; border-left-width: 1px; }
 .hud-corner-br { bottom: 8px; right: 8px; border-bottom-width: 1px; border-right-width: 1px; }
 
-/* Beacon designation tags (desktop only) */
-.hud-tag {
-  position: fixed; left: 0; top: 0; z-index: 0; pointer-events: none; user-select: none;
-  font-size: 9px; letter-spacing: 1.5px; line-height: 1;
-  color: rgba(138, 163, 192, 0.7); text-transform: uppercase;
-  text-shadow: 0 0 6px rgba(4, 6, 15, 0.9);
-  will-change: transform;
-}
-.hud-tag[hidden] { display: none; }
-@media (max-width: 640px) {
-  .hud-tag { display: none; }
-}
-
 /* Focus reticle: sized by JS to the real activation threshold */
 .hud-reticle {
   position: fixed; z-index: 1; left: 50%; top: 50%; pointer-events: none;
@@ -159,7 +145,7 @@ body {
 
 /* First-visit hint, typed beneath the reticle */
 .hud-hint {
-  position: fixed; z-index: 4; left: 50%; bottom: 96px;
+  position: fixed; z-index: 4; left: 50%; top: calc(50% + 13vh);
   transform: translateX(-50%); text-align: center;
   pointer-events: none; user-select: none;
   font-size: 11px; letter-spacing: 2px; line-height: 2;
@@ -207,14 +193,13 @@ body {
     font-size: 9px;
     letter-spacing: 1.5px;
     max-width: 80vw;
-    bottom: 176px;
   }
 }
 
 /* Landscape phones: hint top anchor sits uncomfortably high in short viewports. */
 @media (max-height: 500px) and (max-width: 896px) {
   .hud-hint {
-    bottom: 72px;
+    top: calc(50% + 8vh);
     font-size: 9px;
     letter-spacing: 1.5px;
     max-width: 80vw;

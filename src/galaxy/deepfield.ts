@@ -12,10 +12,6 @@ import { RENDER_ORDER } from './order'
 // Distant galaxies: a few dozen faint elliptical smudges on the far shell.
 // Same billboard chunk as the galaxy layers with orbiting switched off.
 
-export const DEEP_FIELD_COUNT = 120
-export const DEEP_SIZE: [number, number] = [0.25, 0.7]
-export const DEEP_ALPHA: [number, number] = [0.06, 0.18]
-
 export function generateDeepField(count: number, rand: () => number = Math.random): BillboardBuffers {
   const b = allocBillboards(count)
   for (let i = 0; i < count; i++) {
@@ -26,14 +22,14 @@ export function generateDeepField(count: number, rand: () => number = Math.rando
     b.radius[i] = s * r
     b.angle[i] = phi
     b.y[i] = u * r
-    b.size[i] = lerp(DEEP_SIZE[0], DEEP_SIZE[1], rand())
+    b.size[i] = lerp(0.4, 1.2, rand())
     b.rotation[i] = rand() * Math.PI * 2
     b.shape[i] = lerp(1.5, 3.5, rand()) // aspect ratio
     const warm = rand() < 0.5
     b.color[i * 3] = warm ? 1.0 : 0.8
     b.color[i * 3 + 1] = 0.85
     b.color[i * 3 + 2] = warm ? 0.7 : 1.0
-    b.alpha[i] = lerp(DEEP_ALPHA[0], DEEP_ALPHA[1], rand())
+    b.alpha[i] = lerp(0.15, 0.35, rand())
   }
   return b
 }
@@ -62,12 +58,11 @@ export interface DeepField {
 export function createDeepField(
   width: number,
   height: number,
-  count = DEEP_FIELD_COUNT,
+  count = 40,
   rand: () => number = Math.random,
 ): DeepField {
   const uniforms = billboardUniforms(width, height)
   uniforms.uOrbit.value = 0
-  uniforms.uPattern.value = 0
   const material = new ShaderMaterial({
     vertexShader: billboardVertex,
     fragmentShader: deepFieldFragment,

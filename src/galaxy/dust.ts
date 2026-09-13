@@ -23,7 +23,6 @@ import {
 import { clamp01, lerp, makeGauss } from './math'
 import { renderCloudCell } from './noise'
 import { RENDER_ORDER } from './order'
-import { eccentricityAt } from './orbit'
 
 // Dust lanes. Instances hug the concave edge of each arm ridge plus a thin
 // disc population, and multiply the framebuffer by a wavelength-dependent
@@ -35,25 +34,12 @@ export interface DustParams {
   radius: number
   thickness: number
   bulgeRadius: number
-  /** Tilt offset of the lane ellipses toward the concave side of the star ridge (radians). */
-  laneTilt: number
-  /**
-   * Share of instances on lanes. Clumps take their share first
-   * (clumpFraction); the remainder after clumps and lanes is a thin disc
-   * population.
-   */
+  /** World-unit offset of the lane from the ridge toward the concave side. */
+  laneOffset: number
+  /** Share of instances on lanes; the rest is a thin disc population. */
   laneFraction: number
   sizeMin: number
   sizeMax: number
-  /** Share of instances that are small dense clumps sitting on the ridge itself. */
-  clumpFraction: number
-  clumpSizeMin: number
-  clumpSizeMax: number
-  /** Cloud opacity floor; opacity is floor + (1 - floor) * rand^alphaPower. */
-  alphaFloor: number
-  alphaPower: number
-  /** Rotation jitter about the tangent (radians, either sign). */
-  rotationJitter: number
 }
 
 export const DUST_DEFAULTS: DustParams = {
@@ -61,20 +47,14 @@ export const DUST_DEFAULTS: DustParams = {
   radius: 4.5,
   thickness: 0.35,
   bulgeRadius: 0.55,
-  laneTilt: 0.22,
+  laneOffset: 0.18,
   laneFraction: 0.7,
   sizeMin: 0.2,
   sizeMax: 0.6,
-  clumpFraction: 0.15,
-  clumpSizeMin: 0.08,
-  clumpSizeMax: 0.16,
-  alphaFloor: 0.28,
-  alphaPower: 2.2,
-  rotationJitter: 0.3,
 }
 
 /** Multiplier on the atlas mask; 1 is fully opaque at a filament's densest point. */
-export const DUST_ABSORB = 0.85
+export const DUST_ABSORB = 0.65
 /** Per-channel absorption: red passes most, blue least, so lanes read brown. */
 export const DUST_TINT: [number, number, number] = [0.55, 0.78, 1.0]
 
@@ -83,14 +63,7 @@ export const FADE_START = 0.04
 // At and above this |sine of camera elevation| the dust is at full strength.
 export const FADE_FULL = 0.18
 
-export const ATLAS_CELLS = 8
-export const ATLAS_COLS = 4
-export const ATLAS_ROWS = 2
-/** Cells at and past this index are elongated along the orbit tangent. */
-export const ELONGATED_FROM = 4
-export const ELONGATED_ASPECT = 2.5
-/** How much of the cloud absorption is confined to the lanes (0 uniform, 1 lanes only). */
-export const DUST_ARM = 0.6
+const ATLAS_CELLS = 4
 
 /**
  * Fades dust absorption to zero near the galactic plane. The far/near star
@@ -107,65 +80,55 @@ export function dustFade(sinElevation: number): number {
 
 export function generateDust(
   p: DustParams,
-  // Unused until Task 6 puts lanes back on the ellipse ridge.
-  _model: ArmModel,
+  model: ArmModel,
   rand: () => number = Math.random,
 ): BillboardBuffers {
   const b = allocBillboards(p.count)
   const gauss = makeGauss(rand)
+  const arms = model.params.arms
   const inner = p.bulgeRadius * 1.6
   const outer = p.radius
 
   for (let i = 0; i < p.count; i++) {
-    const roll = rand()
-    const clump = roll < p.clumpFraction
-    const lane = !clump && roll < p.clumpFraction + p.laneFraction
     let r: number
-    if (clump || lane) {
+    let a: number
+    if (rand() < p.laneFraction) {
       r = inner + (outer - inner) * Math.pow(rand(), 1.2)
+      a = model.laneAngle(i % arms, r, p.laneOffset) + gauss() * 0.06
     } else {
       r = Math.sqrt(lerp(inner * inner, outer * outer, rand()))
+      a = rand() * Math.PI * 2
     }
     const t = r / p.radius
     b.radius[i] = r
-    b.angle[i] = rand() * Math.PI * 2
+    b.angle[i] = a
     b.y[i] = gauss() * p.thickness * 0.5 * (1 - 0.5 * t)
-    b.ecc[i] = eccentricityAt(r)
-    b.tilt[i] = lane ? -p.laneTilt : 0
-    b.rotation[i] = (rand() * 2 - 1) * p.rotationJitter
-    if (clump) {
-      b.size[i] = lerp(p.clumpSizeMin, p.clumpSizeMax, rand())
-      b.shape[i] = Math.floor(rand() * ELONGATED_FROM)
-      b.alpha[i] = 0.9 + 0.1 * rand()
-    } else {
-      b.size[i] = lerp(p.sizeMin, p.sizeMax, rand())
-      b.shape[i] = Math.floor(rand() * ATLAS_CELLS)
-      b.alpha[i] = p.alphaFloor + (1 - p.alphaFloor) * Math.pow(rand(), p.alphaPower)
-    }
+    b.size[i] = lerp(p.sizeMin, p.sizeMax, rand())
+    b.rotation[i] = rand() * Math.PI * 2
+    b.shape[i] = Math.floor(rand() * ATLAS_CELLS)
     b.color[i * 3] = 1
     b.color[i * 3 + 1] = 1
     b.color[i * 3 + 2] = 1
+    b.alpha[i] = 0.5 + 0.5 * rand()
   }
   return b
 }
 
-/** ATLAS_COLS x ATLAS_ROWS atlas of cloud cells; null outside a browser (tests). */
-export function buildDustAtlas(cellSize = 256, seed = 1): CanvasTexture | null {
+/** 2x2 atlas of cloud cells; null outside a browser (tests). */
+export function buildDustAtlas(cellSize = 128, seed = 1): CanvasTexture | null {
   if (typeof document === 'undefined') return null
   const canvas = document.createElement('canvas')
-  canvas.width = cellSize * ATLAS_COLS
-  canvas.height = cellSize * ATLAS_ROWS
+  canvas.width = canvas.height = cellSize * 2
   const ctx = canvas.getContext('2d')!
-  const image = ctx.createImageData(cellSize * ATLAS_COLS, cellSize * ATLAS_ROWS)
+  const image = ctx.createImageData(cellSize * 2, cellSize * 2)
   for (let cell = 0; cell < ATLAS_CELLS; cell++) {
-    const aspect = cell >= ELONGATED_FROM ? ELONGATED_ASPECT : 1
-    const mask = renderCloudCell(cellSize, seed + cell, aspect)
-    const ox = (cell % ATLAS_COLS) * cellSize
-    const oy = Math.floor(cell / ATLAS_COLS) * cellSize
+    const mask = renderCloudCell(cellSize, seed + cell)
+    const ox = (cell % 2) * cellSize
+    const oy = Math.floor(cell / 2) * cellSize
     for (let y = 0; y < cellSize; y++) {
       for (let x = 0; x < cellSize; x++) {
         const v = Math.round(mask[y * cellSize + x] * 255)
-        const o = ((oy + y) * cellSize * ATLAS_COLS + ox + x) * 4
+        const o = ((oy + y) * cellSize * 2 + ox + x) * 4
         image.data[o] = v
         image.data[o + 1] = v
         image.data[o + 2] = v
@@ -178,10 +141,6 @@ export function buildDustAtlas(cellSize = 256, seed = 1): CanvasTexture | null {
   texture.minFilter = LinearFilter
   texture.magFilter = LinearFilter
   texture.generateMipmaps = false
-  // CanvasTexture defaults flipY true, which samples canvas row 0 (the
-  // round cells) at v in [0.5, 1] while the fragment maps cell 0-3 to
-  // v in [0, 0.5]; keep the atlas rows aligned with the fragment's mapping.
-  texture.flipY = false
   return texture
 }
 
@@ -190,17 +149,14 @@ uniform sampler2D uAtlas;
 uniform float uAbsorb;
 uniform vec3 uTint;
 uniform float uFade;
-uniform float uDustArm;
 varying vec2 vUv;
 varying float vAlpha;
 varying float vShape;
-varying float vArm;
 
 void main() {
-  vec2 cell = vec2(mod(vShape, 4.0), floor(vShape / 4.0));
-  float mask = texture2D(uAtlas, (vUv + cell) * vec2(0.25, 0.5)).r;
-  float arm = mix(1.0 - uDustArm, 1.0, vArm);
-  float a = mask * vAlpha * uAbsorb * uFade * arm;
+  vec2 cell = vec2(mod(vShape, 2.0), floor(vShape / 2.0));
+  float mask = texture2D(uAtlas, (vUv + cell) * 0.5).r;
+  float a = mask * vAlpha * uAbsorb * uFade;
   // transmission per channel; the framebuffer is multiplied by this
   gl_FragColor = vec4(1.0 - a * uTint, 1.0);
 }
@@ -231,9 +187,7 @@ export function createDust(
     uAbsorb: { value: DUST_ABSORB },
     uTint: { value: new Vector3(...DUST_TINT) },
     uFade: { value: 1 },
-    uDustArm: { value: DUST_ARM },
   }
-  uniforms.uAlign.value = 1
   const material = new ShaderMaterial({
     vertexShader: billboardVertex,
     fragmentShader: dustFragment,
