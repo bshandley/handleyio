@@ -2,11 +2,11 @@ import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { createArmModel } from './galaxy/arms'
 import { createDeepField } from './galaxy/deepfield'
 import { createDust, dustFade } from './galaxy/dust'
-import { createGalaxy, type Galaxy } from './galaxy/galaxy'
-import { createGlow } from './galaxy/glow'
+import { createGalaxy, STAR_INTENSITY, type Galaxy } from './galaxy/galaxy'
+import { createGlow, GLOW_INTENSITY } from './galaxy/glow'
 import { createStarfield } from './galaxy/starfield'
 import type { QualityLevel } from './quality'
-import { createPost, type PostChain } from './render/post'
+import { createPost, DIRECT_PATH_SCALE, parseExposureParam, parseToneParam, type PostChain } from './render/post'
 
 export interface GalaxyScene {
   scene: Scene
@@ -68,8 +68,17 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
   const deepField = createDeepField(innerWidth * pixelRatio, innerHeight * pixelRatio)
   scene.add(starfield.points, deepField.mesh, glow.mesh, galaxy.group, dust.mesh)
 
-  const post = createPost(renderer, scene, camera, innerWidth, innerHeight)
+  const post = createPost(renderer, scene, camera, innerWidth, innerHeight, {
+    tone: parseToneParam(location.search) ?? undefined,
+    exposure: parseExposureParam(location.search) ?? undefined,
+  })
   window.__renderPath = post.path
+  // The direct path has no tone mapper, so the layers tuned for the HDR
+  // path's curve clip flat; dim them to keep the core and giants in range.
+  if (post.path === 'direct') {
+    galaxy.setIntensity(STAR_INTENSITY * DIRECT_PATH_SCALE)
+    glow.setIntensity(GLOW_INTENSITY * DIRECT_PATH_SCALE)
+  }
 
   let currentStars = level.stars
   const layout = () => {
@@ -98,9 +107,8 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches
   const clock = new Clock()
   const frameCbs: Array<(dt: number, elapsed: number) => void> = []
-  // Start well into the swirl so differential rotation has already sheared
-  // the arms out of their symmetric phases (scaled with orbitalSpeed).
-  let elapsed = 160
+  // Density-wave arms need no pre-wind; the pattern is stable from t = 0.
+  let elapsed = 0
   let running = true
   let contextLost = false
   const setTime = (t: number) => {
@@ -148,8 +156,10 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
     }
     galaxy.setCameraSide(camera.position.y >= 0)
     dust.setFade(dustFade(camera.position.y / camera.position.length()))
+    glow.setProximity(camera.position.length())
     for (const cb of frameCbs) cb(dt, elapsed)
     renderer.info.reset()
+    post.setTime(reducedMotion ? 0 : elapsed)
     post.render()
     window.__frameCount = (window.__frameCount ?? 0) + 1
   }

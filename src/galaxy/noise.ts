@@ -38,16 +38,20 @@ export function fbm(x: number, y: number, seed: number, octaves = 5): number {
   return sum / norm
 }
 
-/** One atlas cell: a filamentary cloud mask in [0, 1] with a soft radial edge. */
-export function renderCloudCell(size: number, seed: number): Float32Array {
+/**
+ * One atlas cell: a filamentary cloud mask in [0, 1] with a soft radial
+ * edge. `aspect` above 1 stretches the cloud and its filaments along x, for
+ * cells that lie along a dust lane.
+ */
+export function renderCloudCell(size: number, seed: number, aspect = 1): Float32Array {
   const out = new Float32Array(size * size)
   for (let py = 0; py < size; py++) {
     for (let px = 0; px < size; px++) {
       const u = (px + 0.5) / size * 2 - 1
       const v = (py + 0.5) / size * 2 - 1
-      const rad = Math.hypot(u, v)
+      const rad = Math.hypot(u, v * aspect)
       const edge = 1 - smoothClamp(rad, 0.55, 1.0)
-      const n = fbm(u * 2.5 + seed * 7, v * 2.5 + seed * 3, seed)
+      const n = fbm((u * 2.5) / aspect + seed * 7, v * 2.5 + seed * 3, seed)
       const filaments = smoothClamp(n, 0.38, 0.72)
       out[py * size + px] = filaments * edge
     }
