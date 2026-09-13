@@ -41,7 +41,7 @@ export interface GlowParams {
 }
 
 export const GLOW_DEFAULTS: GlowParams = {
-  count: 5000,
+  count: 7000,
   radius: 4.5,
   thickness: 0.35,
   bulgeRadius: 0.55,
@@ -50,8 +50,8 @@ export const GLOW_DEFAULTS: GlowParams = {
   bulgeCoreSigma: 0.3,
   bulgeHaloSigma: 2.0,
   sizeMin: 0.1,
-  sizeMax: 0.55,
-  alpha: 0.13,
+  sizeMax: 0.42,
+  alpha: 0.115,
   // vArm is 0 for bulge instances (e = 0), so bulge alpha is scaled by
   // (1 - GLOW_ARM) = 0.15 in the fragment shader; bulgeAlphaScale is
   // raised to 0.5 to compensate, and the two-component bulge piles up
@@ -94,7 +94,7 @@ export function generateGlow(
       const gz = gauss() * 2 * p.bulgeRadius * sigma
       r = Math.hypot(gx, gz)
       a = Math.atan2(gz, gx)
-      yy = gauss() * 2 * p.bulgeRadius * sigma * 0.5
+      yy = gauss() * 2 * p.bulgeRadius * sigma * 0.4
       color = p.palette[0]
     } else {
       r = (GLOW_FLOOR + (1 - GLOW_FLOOR) * Math.pow(rand(), GLOW_EXPONENT)) * p.radius
@@ -110,7 +110,7 @@ export function generateGlow(
     b.y[i] = yy
     // sizes skew small with a long tail so the gas is a mix of wisps and
     // broad patches rather than same-sized puffs
-    b.size[i] = lerp(p.sizeMin, p.sizeMax, Math.pow(rand(), 1.6)) * (inBulge ? 1.5 : 1.0)
+    b.size[i] = lerp(p.sizeMin, p.sizeMax, Math.pow(rand(), 1.6)) * (inBulge ? 1.1 : 1.0)
     b.rotation[i] = rand() * Math.PI * 2
     // procedural cloud cell (shared atlas builder with the dust): the gas
     // reads as irregular wisps, not spheres
@@ -141,7 +141,7 @@ void main() {
   // soft radial envelope times a filamentary cloud cell from the atlas
   vec2 cell = vec2(mod(vShape, 4.0), floor(vShape / 4.0));
   float mask = texture2D(uAtlas, (vUv + cell) * vec2(0.25, 0.5)).r;
-  float a = exp(-r2 * 2.0) * (1.0 - smoothstep(0.6, 1.0, r2)) * (0.35 + 0.65 * mask);
+  float a = exp(-r2 * 1.6) * (1.0 - smoothstep(0.55, 1.0, r2)) * (0.5 + 0.5 * mask);
   float arm = mix(1.0 - uGlowArm, 1.0, vArm);
   float prox = mix(uProxLaw.z, 1.0, smoothstep(uProxLaw.y, uProxLaw.x, uProximity));
   gl_FragColor = vec4(vColor * uIntensity, a * vAlpha * arm * prox);

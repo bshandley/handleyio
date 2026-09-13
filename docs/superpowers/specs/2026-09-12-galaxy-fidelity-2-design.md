@@ -539,3 +539,8 @@ the plan's constants table.
   under a soft radial envelope, with a skewed size range 0.1 to 0.55 and
   alpha 0.13, so the gas is irregular wisps. Beacon tags sit on a dark
   translucent pill with a faint accent border and brighter text.
+- Rework, fourth pass (Bradley at range 6.7: gas too splotchy and dark):
+  7000 glow sprites, sizes 0.1 to 0.42, alpha 0.115, a softer radial
+  envelope with the cloud mask at half weight, bulge halo sprites 1.1x
+  with y flatten 0.4; `DUST_ABSORB` 0.65 and dust `alphaFloor` 0.35 so the
+  inter-arm field is no longer muddy brown.
