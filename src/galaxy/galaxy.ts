@@ -17,7 +17,7 @@ export const STAR_INTENSITY = 0.6
 const BASE_POINT_SIZE = 22
 
 /** Extra brightness for stars inside an arm (young population). */
-export const ARM_LUM = 1.3
+export const ARM_LUM = 1.0
 /** Blue shift blend for stars inside an arm. */
 export const ARM_BLUE = 0.6
 /** Giant flicker amplitude. */

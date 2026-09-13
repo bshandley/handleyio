@@ -104,10 +104,12 @@ void main() {
   // interleaved gradient noise, half an LSB, breaks banding in the glow
   float n = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
   c.rgb += (n - 0.5) / 255.0;
-  // animated grain, strongest in the shadows, frozen when uTime is held at 0
+  // animated grain, strongest in the shadows, frozen when uTime is held at 0.
+  // Interleaved gradient noise on a per-frame pixel offset: the classic
+  // sin-based hash breaks into sweeping diagonal bands on Apple GPUs.
   float luma = dot(c.rgb, vec3(0.299, 0.587, 0.114));
-  vec2 seed = gl_FragCoord.xy + vec2(fract(uTime * 0.731) * 917.0, fract(uTime * 0.457) * 613.0);
-  float g = fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+  vec2 seed = gl_FragCoord.xy + floor(vec2(fract(uTime * 0.731) * 917.0, fract(uTime * 0.457) * 613.0));
+  float g = fract(52.9829189 * fract(dot(seed, vec2(0.06711056, 0.00583715)))) - 0.5;
   c.rgb += g * (uGrain / 255.0) * (1.0 - luma);
   gl_FragColor = c;
 }

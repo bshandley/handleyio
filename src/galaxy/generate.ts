@@ -79,6 +79,11 @@ const BRIGHT_GIANT_CUTOFF = 0.995 // of the size power law; ~0.13% of disc stars
 // Cluster members dim (giants excepted) so a cluster reads as a sparkle of
 // stars rather than one bright smear under additive blending.
 export const CLUSTER_LUM_FACTOR = 0.6
+// Knot shape: gaussian jitter of members about the cluster's a (world units,
+// times the 0.5 sd gauss) and about its phase (radians at a = 2, scaled by
+// 1 / a). Small a jitter shears the knot only over many minutes.
+export const CLUSTER_A_JITTER = 0.12
+export const CLUSTER_PHASE_JITTER = 0.06
 
 // Luminosity function: brightness grows with the square of size so most
 // stars are faint and the few giants carry the light (and cross 1.0 in the
@@ -123,9 +128,10 @@ export function generateGalaxy(
   const gauss = makeGauss(rand)
   const arms = model.params.arms
 
-  // Star-forming clusters: each is one semi-major axis (members share it
-  // exactly, so they stay compact under differential rotation) seeded on an
-  // arm ridge at t = 0.
+  // Star-forming clusters: a knot of stars around one semi-major axis,
+  // seeded on an arm ridge at t = 0. Members jitter slightly in a and in
+  // phase so the knot is round; sharing a exactly with a wide phase jitter
+  // made each cluster a one-dimensional arc that read as a bright streak.
   const clusterCount = Math.max(8, Math.round(n / 1500))
   const clusters: Array<{ a: number; phase: number; y: number }> = []
   for (let c = 0; c < clusterCount; c++) {
@@ -159,8 +165,8 @@ export function generateGalaxy(
       e = 0
     } else if (inClump) {
       const c = clusters[Math.floor(rand() * clusters.length)]
-      r = c.a
-      a = c.phase + (gauss() * 0.16) / Math.max(0.4, c.a * 0.5)
+      r = c.a + gauss() * CLUSTER_A_JITTER
+      a = c.phase + (gauss() * CLUSTER_PHASE_JITTER) / Math.max(0.4, c.a * 0.5)
       yy = c.y + gauss() * p.thickness * 0.25
       e = eccentricityAt(r)
       clusterMember = true
@@ -179,7 +185,7 @@ export function generateGalaxy(
     }
 
     // fuzzy edge: gaussian radial jitter, stronger outward, soft cap at 1.2x.
-    // Cluster members keep their shared a.
+    // Cluster members keep their (jittered) a: no fuzzy-edge push.
     if (!inBulge && !clusterMember) r += gauss() * 0.15 * (0.3 + r / p.radius)
     // Cluster members rely on this clamp being a no-op: a cluster's shared a
     // comes from the cluster law above (max 1.0 * p.radius), which never

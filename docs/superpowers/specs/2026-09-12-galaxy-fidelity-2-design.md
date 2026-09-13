@@ -524,3 +524,12 @@ the plan's constants table.
   `alphaFloor` 0.28 to 0.45, and ladder levels 2 to 4 draw 0.75 of the glow
   and dust instead of 0.5. The dust opacity test now measures "skewed thin"
   against the floor-to-one range rather than an absolute 0.5.
+- Rework, second pass (Bradley on the preview: distracting diagonal lines
+  in the stars, and less gas than the checkpoint): clusters no longer share
+  one exact orbit; members jitter in a (0.12) with a narrow phase jitter
+  (0.06), so a cluster is a round knot rather than a one-dimensional arc
+  that swept as a bright streak. The finish-pass grain uses interleaved
+  gradient noise with a per-frame pixel offset instead of the sin-based
+  hash, which bands diagonally on Apple GPUs. Gas restored with `GLOW_ARM`
+  0.4, glow alpha 0.09, bulge halo sigma 2.0 with y flatten 0.5, and
+  `ARM_LUM` 1.0 to soften the hard white ridge.
