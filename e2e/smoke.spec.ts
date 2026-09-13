@@ -161,8 +161,10 @@ test('telemetry draw count covers the whole frame on the hdr path', async ({ pag
     const text = await page.locator('.hud-tele-tr .hud-tele-line').nth(2).textContent()
     return Number((text ?? '').replace(/\D/g, ''))
   }
-  // pre-change scene was 7 draw calls; the composer's passes push it well past that
-  await expect.poll(drawCount, { timeout: 5000 }).toBeGreaterThan(7)
+  // floor scene: background, deep field, two star halves, one beacon mesh = 5
+  // draw calls; the composer's output and finish passes push the full-frame
+  // count to 7, which a per-pass reset would not show.
+  await expect.poll(drawCount, { timeout: 5000 }).toBeGreaterThanOrEqual(7)
 })
 
 test('the camera stays at least 12 degrees off the galactic plane', async ({ page }) => {

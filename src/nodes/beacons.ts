@@ -63,7 +63,8 @@ void main() {
   float spikes = 0.3 * reach * reach * (exp(-abs(p.y) * 70.0) + exp(-abs(p.x) * 70.0));
   float pulse = 0.5 + 0.5 * sin(uTime * 2.2 + vShape);
   float ringR = 0.30 + 0.06 * pulse;
-  float ring = exp(-pow((len - ringR) * 40.0, 2.0)) * (0.25 + 0.2 * pulse);
+  float dr = (len - ringR) * 40.0;
+  float ring = exp(-dr * dr) * (0.25 + 0.2 * pulse);
   float edge = 1.0 - smoothstep(0.45, 0.5, len);
   gl_FragColor = vec4(vColor * uIntensity, (core + spikes + ring) * edge * vAlpha);
 }
