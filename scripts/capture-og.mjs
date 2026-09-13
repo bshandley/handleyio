@@ -14,7 +14,7 @@ await page.addInitScript(() => localStorage.setItem('handleyio:hint-seen', '1'))
 // and the governor steps it down further within seconds, since software GL
 // is slow, so an unpinned capture would show a degraded scene.
 await page.goto('http://localhost:4173/?level=0', { waitUntil: 'networkidle' })
-// let the galaxy render and the pre-sheared arms settle visually
+// let the first frames render
 await page.waitForTimeout(4000)
 await page.screenshot({ path: 'public/og.png' })
 await browser.close()

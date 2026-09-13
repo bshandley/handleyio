@@ -1,6 +1,6 @@
 import type { ArmModel } from './arms'
 import { clamp01, lerp, makeGauss } from './math'
-import { eccentricityAt, tilt } from './orbit'
+import { eccentricityAt, ORBIT, tilt } from './orbit'
 
 export type Rgb = [number, number, number]
 /** Radial color stops at t = 0, 1/3, 2/3, 1. */
@@ -100,9 +100,10 @@ const ARM_EXPONENT = 0.9
 // Phase at which an ellipse of semi-major axis a sits at world angle `angle`
 // at t = 0: the major axis points along tilt(a), so the phase is the angle
 // measured from the ridge (ellipse shape ignored; clusters only need to
-// start near the arm).
-function ridgePhase(angle: number, a: number): number {
-  return angle - tilt(a, 0)
+// start near the arm). Uses the arm model's own spin/wobble, mirroring
+// ArmModel.ridgeAngle, so a custom ArmParams does not mix two tilt laws.
+function ridgePhase(angle: number, a: number, model: ArmModel): number {
+  return angle - tilt(a, 0, { ...ORBIT, spin: model.params.spin, wobble: model.params.wobble })
 }
 
 export function generateGalaxy(
@@ -131,7 +132,7 @@ export function generateGalaxy(
     const a = (0.25 + 0.75 * Math.pow(rand(), 1.5)) * p.radius
     clusters.push({
       a,
-      phase: ridgePhase(model.ridgeAngle(c % arms, a), a) + gauss() * 0.08,
+      phase: ridgePhase(model.ridgeAngle(c % arms, a), a, model) + gauss() * 0.08,
       y: gauss() * p.thickness * 0.4,
     })
   }
@@ -180,6 +181,9 @@ export function generateGalaxy(
     // fuzzy edge: gaussian radial jitter, stronger outward, soft cap at 1.2x.
     // Cluster members keep their shared a.
     if (!inBulge && !clusterMember) r += gauss() * 0.15 * (0.3 + r / p.radius)
+    // Cluster members rely on this clamp being a no-op: a cluster's shared a
+    // comes from the cluster law above (max 1.0 * p.radius), which never
+    // reaches the 1.2x cap, so clusters are never reshaped by it.
     r = Math.min(1.2 * p.radius, Math.max(0, r))
     const t = Math.min(1, r / p.radius)
     radius[i] = r

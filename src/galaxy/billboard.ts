@@ -123,7 +123,11 @@ void main() {
   float rot = aRotation;
   if (uAlign > 0.5) {
     vec3 tangent = (modelViewMatrix * vec4(orbitTangent(aRadius, aAngle, aEcc, aTilt), 0.0)).xyz;
-    rot += atan(tangent.y, tangent.x);
+    // Guard the degenerate case (tangent projects to a point on screen):
+    // atan2(0, 0) is undefined in GLSL ES and must not feed the rotation.
+    if (dot(tangent.xy, tangent.xy) > 1e-12) {
+      rot += atan(tangent.y, tangent.x);
+    }
   }
   float c = cos(rot);
   float s = sin(rot);

@@ -395,8 +395,10 @@ the plan's constants table.
   iterations to reach the round-trip tolerance rather than the dozen or
   so assumed. Shipped a guarded Steffensen/Aitken-accelerated iteration
   instead: 8 cycles of two plain fixed-point steps each, combined by
-  Aitken extrapolation, 16 fixed-point evaluations total (the same
-  evaluation budget as the plain loop the brief specified), with a guard
+  Aitken extrapolation, 17 fixed-point evaluations total (8 cycles of
+  two plain fixed-point steps each, plus the final consistency
+  evaluation; the same evaluation budget as the plain loop the brief
+  specified), with a guard
   that falls back to the plain next iterate when the extrapolation would
   be degenerate or overshoot. Converges to about 1e-14 for every real
   call site.

@@ -52,8 +52,9 @@ export const GLOW_DEFAULTS: GlowParams = {
   sizeMax: 0.36,
   alpha: 0.048,
   // vArm is 0 for bulge instances (e = 0), so bulge alpha is scaled by
-  // (1 - GLOW_ARM) in the fragment shader; raised from 0.2 to compensate,
-  // and the two-component bulge piles up less than the old single gaussian.
+  // (1 - GLOW_ARM) = 0.15 in the fragment shader; bulgeAlphaScale is
+  // raised to 0.5 to compensate, and the two-component bulge piles up
+  // less than the old single gaussian.
   bulgeAlphaScale: 0.5,
   palette: PALETTE,
 }

@@ -37,7 +37,11 @@ export interface DustParams {
   bulgeRadius: number
   /** Tilt offset of the lane ellipses toward the concave side of the star ridge (radians). */
   laneTilt: number
-  /** Share of instances on lanes; the rest is a thin disc population. */
+  /**
+   * Share of instances on lanes. Clumps take their share first
+   * (clumpFraction); the remainder after clumps and lanes is a thin disc
+   * population.
+   */
   laneFraction: number
   sizeMin: number
   sizeMax: number

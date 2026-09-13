@@ -44,9 +44,6 @@ export function omega(a: number): number {
   return 0.0875 / (0.3 + a)
 }
 
-/** Alias kept for round-one call sites. */
-export const orbitalSpeed = omega
-
 export function tilt(a: number, t: number, p: OrbitParams = ORBIT): number {
   return p.spin * a + p.wobble * Math.sin(a * 3.1) + p.pattern * t
 }
