@@ -121,9 +121,14 @@ describe('generateGalaxy', () => {
     expect(maxLum).toBeGreaterThan(1)
   })
 
-  it('cluster members share one semi-major axis so they never shear apart', () => {
+  it('cluster members sit within a narrow band of semi-major axes so they stay compact', () => {
+    // members jitter a little in a (a round knot, not a one-dimensional arc);
+    // group by 0.25 world-unit bins
     const groups = new Map<number, number>()
-    for (const a of g.radius) groups.set(a, (groups.get(a) ?? 0) + 1)
+    for (const a of g.radius) {
+      const bin = Math.round(a * 4)
+      groups.set(bin, (groups.get(bin) ?? 0) + 1)
+    }
     let compact = 0
     for (const n of groups.values()) if (n >= 20) compact++
     // max(8, 5000 / 1500) = 8 clusters share 15% of the stars

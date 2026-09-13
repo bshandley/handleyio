@@ -2354,26 +2354,28 @@ Fill the Final column as you go. Every value here is the tuning record for this 
 | `TONE_MAPPER` (Task 1 spike; note capture names and the reason) | src/render/post.ts | agx | neutral (Task 1 spike: agx-085/neutral-085/agx-110/neutral-110 captures; outer arms hold blue and the core rolls gold to pale under Neutral, grey/plateau under AgX) |
 | `EXPOSURE` | src/render/post.ts | 0.85 | 0.85 (untouched) |
 | `BLOOM.strength / radius / threshold` | src/render/post.ts | 0.3 / 0.6 / 1.0 | 0.3 / 0.6 / 1.0 (untouched; reads well) |
-| `GRAIN` | src/render/post.ts | 1.5 | 1.5 (untouched) |
+| `GRAIN` | src/render/post.ts | 1.5 | 1.5 (rework: the sin-based hash was replaced by interleaved gradient noise with a per-frame pixel offset; the sin hash bands diagonally on Apple GPUs) |
 | `ORBIT.spin / wobble / pattern / eInner / eFalloff` | src/galaxy/orbit.ts | 0.95 / 0.1 / 0.02 / 0.35 / 0.5 | 1.7 / 0.1 / 0.02 / 0.55 / 0.5 (spin and eInner were the headline fix for the no-spiral problem; wobble/pattern/eFalloff untouched) |
 | `ARM_POWER / ARM_SHIFT` | src/galaxy/shaders.ts | 3.0 / 0.0 | 3.0 / 0.0 (untouched; the spiral read clearly once spin/eInner/ARM_LUM/GLOW_ARM moved) |
 | `STAR_INTENSITY` | src/galaxy/galaxy.ts | 0.6 | 0.6 (untouched) |
-| `ARM_LUM / ARM_BLUE / TWINKLE` | src/galaxy/galaxy.ts | 0.8 / 0.6 / 0.15 | 1.3 / 0.6 / 0.15 (ARM_LUM raised to sharpen arm/inter-arm contrast) |
+| `ARM_LUM / ARM_BLUE / TWINKLE` | src/galaxy/galaxy.ts | 0.8 / 0.6 / 0.15 | 1.0 / 0.6 / 0.15 (1.3 at ship; rework softened the hard white ridge) |
 | `LUM_FLOOR / LUM_SCALE / GIANT_LUM` | src/galaxy/generate.ts | 0.15 / 1.0 / 3.0 | 0.15 / 1.0 / 3.0 (untouched) |
 | `CLUSTER_LUM_FACTOR` (new; not in the spec's table) | src/galaxy/generate.ts | n/a | 0.6 (dims non-giant cluster members so a cluster reads as a sparkle, not a smear; see deviations) |
-| cluster phase jitter (`gauss() * 0.06` in `generateGalaxy`) | src/galaxy/generate.ts | 0.06 | 0.16 (clusters were compact flat blobs; widened per the tuning notes' 0.12-0.2 range) |
+| `CLUSTER_PHASE_JITTER / CLUSTER_A_JITTER` (cluster knot shape) | src/galaxy/generate.ts | 0.06 / 0 | 0.06 / 0.12 (0.16 / 0 at ship: members on one exact orbit with a wide phase jitter formed one-dimensional arcs that read as bright diagonal streaks; the rework makes the knot round with a small a jitter) |
 | `GALAXY_DEFAULTS.bulgeFraction / bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma` | src/galaxy/generate.ts | 0.12 / 0.35 / 0.3 / 2.5 | 0.12 / 0.35 / 0.3 / 1.4 (halo shrunk to kill the floating yellow blobs; kept in step with GLOW_DEFAULTS) |
 | `PALETTE` | src/galaxy/generate.ts | round-one values | round-one values (untouched; reads well) |
-| `GLOW_DEFAULTS.bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma / bulgeAlphaScale` | src/galaxy/glow.ts | 0.4 / 0.3 / 2.5 / 0.5 | 0.4 / 0.3 / 1.4 / 0.5 (bulgeAlphaScale untouched; the smaller halo alone tamed the core) |
-| glow bulge y-flatten factor (`* 0.6` in `generateGlow`; not a named param) | src/galaxy/glow.ts | 0.6 | 0.35 (see deviations) |
-| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | 0.85 (raised alongside ARM_LUM for arm/inter-arm contrast) |
+| `GLOW_DEFAULTS.bulgeCoreShare / bulgeCoreSigma / bulgeHaloSigma / bulgeAlphaScale` | src/galaxy/glow.ts | 0.4 / 0.3 / 2.5 / 0.5 | 0.4 / 0.3 / 2.0 / 0.5 (1.4 at ship; rework widened the halo for the gas above the core) |
+| glow bulge y-flatten factor (`* 0.6` in `generateGlow`; not a named param) | src/galaxy/glow.ts | 0.6 | 0.4 (0.35 at ship; rework) |
+| `GLOW_ARM` | src/galaxy/glow.ts | 0.7 | 0.4 (0.85 at ship; the rework lowered it so the inter-arm gas of round one comes back) |
 | `PROXIMITY.far / near / min` | src/galaxy/glow.ts | 7.0 / 5.5 / 0.45 | 7.0 / 5.5 / 0.45 (untouched) |
-| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha` | src/galaxy/glow.ts | 0.8, 0.048 | 0.8, 0.048 (untouched) |
-| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | 0.22 / 0.15 / 0.28 / 2.2 / 0.3 (alphaFloor raised; the layer was confirmed working, just too subtle to read) |
-| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.85, 0.6 (DUST_ARM untouched; lanes already sat on the concave side, no laneTilt sign flip needed) |
+| `GLOW_INTENSITY`, `GLOW_DEFAULTS.alpha`, `GLOW_DEFAULTS.count` | src/galaxy/glow.ts | 0.8, 0.048, 5000 | 0.8, 0.115, 7000 (rework: more, lighter sprites for a continuous haze) |
+| `GLOW_DEFAULTS.sizeMin / sizeMax` and glow atlas (rework) | src/galaxy/glow.ts | 0.12 / 0.36, gaussian discs | 0.1 / 0.42 with a rand^1.6 size skew (bulge instances 1.1x, was 1.5x); each sprite samples a cell of the procedural cloud atlas (`buildDustAtlas(128, 41)`) under a soft radial envelope, so gas reads as wisps, not spheres |
+| `DUST_DEFAULTS.laneTilt / clumpFraction / alphaFloor / alphaPower / rotationJitter` | src/galaxy/dust.ts | 0.22 / 0.15 / 0.15 / 2.2 / 0.3 | 0.22 / 0.15 / 0.35 / 2.2 / 0.3 (alphaFloor 0.28 at ship, 0.35 after the rework) |
+| `DUST_ABSORB`, `DUST_ARM` | src/galaxy/dust.ts | 0.65, 0.6 | 0.65, 0.3 (0.85 / 0.6 at ship; the rework lightened the inter-arm field, lanes sit on the concave side) |
 | `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | 1.8 / 0.55 (untouched; reads well) |
 | `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | 0.5 (untouched) |
-| `MAX_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 78 / 5.5 (whole-branch review: 12/168 forbade the poles, not the plane; single hemisphere clamp, `MIN_DISTANCE` untouched) |
+| `MAX_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | removed / 4 (rework: Bradley rejected the clamp and the smaller view; round one's limits restored) |
+| `LADDER` glow/dust fractions at levels 2 to 4 (rework) | src/quality.ts | 0.5 / 0.5 | 0.75 / 0.75 |
 | `DIRECT_PATH_SCALE` (new; not in the spec's table) | src/render/post.ts | n/a | 0.4 (whole-branch review: the direct path has no tone mapper, so the layers tuned for the HDR curve clipped the core and giants flat white; `final-direct-load.png` confirmed 0.4 keeps individual bulge stars visible with no flat white disc) |
 
 - [x] **Step 3: Ten-minute check**

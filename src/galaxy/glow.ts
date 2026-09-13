@@ -10,6 +10,7 @@ import {
 } from './billboard'
 import { PALETTE, paletteAt, type Palette } from './generate'
 import { lerp, makeGauss } from './math'
+import { ATLAS_CELLS, buildDustAtlas } from './dust'
 import { eccentricityAt } from './orbit'
 import { RENDER_ORDER } from './order'
 
@@ -40,17 +41,17 @@ export interface GlowParams {
 }
 
 export const GLOW_DEFAULTS: GlowParams = {
-  count: 5000,
+  count: 7000,
   radius: 4.5,
   thickness: 0.35,
   bulgeRadius: 0.55,
   bulgeFraction: 0.25,
   bulgeCoreShare: 0.4,
   bulgeCoreSigma: 0.3,
-  bulgeHaloSigma: 1.4,
-  sizeMin: 0.12,
-  sizeMax: 0.36,
-  alpha: 0.048,
+  bulgeHaloSigma: 2.0,
+  sizeMin: 0.1,
+  sizeMax: 0.42,
+  alpha: 0.115,
   // vArm is 0 for bulge instances (e = 0), so bulge alpha is scaled by
   // (1 - GLOW_ARM) = 0.15 in the fragment shader; bulgeAlphaScale is
   // raised to 0.5 to compensate, and the two-component bulge piles up
@@ -62,7 +63,7 @@ export const GLOW_DEFAULTS: GlowParams = {
 export const GLOW_INTENSITY = 0.8
 
 /** How much of the disc haze is confined to the arms (0 uniform, 1 arms only). */
-export const GLOW_ARM = 0.85
+export const GLOW_ARM = 0.4
 /** Camera distance to the origin at which the haze is at full strength / attenuated to `min`. */
 export const PROXIMITY = { far: 7.0, near: 5.5, min: 0.45 }
 
@@ -93,7 +94,7 @@ export function generateGlow(
       const gz = gauss() * 2 * p.bulgeRadius * sigma
       r = Math.hypot(gx, gz)
       a = Math.atan2(gz, gx)
-      yy = gauss() * 2 * p.bulgeRadius * sigma * 0.35
+      yy = gauss() * 2 * p.bulgeRadius * sigma * 0.4
       color = p.palette[0]
     } else {
       r = (GLOW_FLOOR + (1 - GLOW_FLOOR) * Math.pow(rand(), GLOW_EXPONENT)) * p.radius
@@ -107,9 +108,13 @@ export function generateGlow(
     b.radius[i] = r
     b.angle[i] = a
     b.y[i] = yy
-    b.size[i] = lerp(p.sizeMin, p.sizeMax, rand()) * (inBulge ? 1.5 : 1.0)
+    // sizes skew small with a long tail so the gas is a mix of wisps and
+    // broad patches rather than same-sized puffs
+    b.size[i] = lerp(p.sizeMin, p.sizeMax, Math.pow(rand(), 1.6)) * (inBulge ? 1.1 : 1.0)
     b.rotation[i] = rand() * Math.PI * 2
-    b.shape[i] = 0
+    // procedural cloud cell (shared atlas builder with the dust): the gas
+    // reads as irregular wisps, not spheres
+    b.shape[i] = Math.floor(rand() * ATLAS_CELLS)
     b.color[i * 3] = color[0]
     b.color[i * 3 + 1] = color[1]
     b.color[i * 3 + 2] = color[2]
@@ -123,15 +128,20 @@ uniform float uIntensity;
 uniform float uGlowArm;
 uniform float uProximity;
 uniform vec3 uProxLaw; // far, near, min
+uniform sampler2D uAtlas;
 varying vec2 vUv;
 varying vec3 vColor;
 varying float vAlpha;
+varying float vShape;
 varying float vArm;
 
 void main() {
   vec2 d = (vUv - 0.5) * 2.0;
   float r2 = dot(d, d);
-  float a = exp(-r2 * 3.0) * (1.0 - smoothstep(0.6, 1.0, r2));
+  // soft radial envelope times a filamentary cloud cell from the atlas
+  vec2 cell = vec2(mod(vShape, 4.0), floor(vShape / 4.0));
+  float mask = texture2D(uAtlas, (vUv + cell) * vec2(0.25, 0.5)).r;
+  float a = exp(-r2 * 1.6) * (1.0 - smoothstep(0.55, 1.0, r2)) * (0.5 + 0.5 * mask);
   float arm = mix(1.0 - uGlowArm, 1.0, vArm);
   float prox = mix(uProxLaw.z, 1.0, smoothstep(uProxLaw.y, uProxLaw.x, uProximity));
   gl_FragColor = vec4(vColor * uIntensity, a * vAlpha * arm * prox);
@@ -158,9 +168,12 @@ export function createGlow(
   rand: () => number = Math.random,
 ): GlowLayer {
   const params = { ...GLOW_DEFAULTS, ...overrides }
+  // own atlas instance (different seed from the dust) so gas and lanes never share a silhouette
+  const atlas = buildDustAtlas(128, 41)
   const uniforms = {
     ...billboardUniforms(width, height),
     uIntensity: { value: GLOW_INTENSITY },
+    uAtlas: { value: atlas },
     uGlowArm: { value: GLOW_ARM },
     uProximity: { value: PROXIMITY.far },
     uProxLaw: { value: new Vector3(PROXIMITY.far, PROXIMITY.near, PROXIMITY.min) },
@@ -199,6 +212,7 @@ export function createGlow(
     dispose() {
       geometry.dispose()
       material.dispose()
+      atlas?.dispose()
     },
   }
 }

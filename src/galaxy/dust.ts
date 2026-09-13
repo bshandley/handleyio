@@ -68,13 +68,13 @@ export const DUST_DEFAULTS: DustParams = {
   clumpFraction: 0.15,
   clumpSizeMin: 0.08,
   clumpSizeMax: 0.16,
-  alphaFloor: 0.28,
+  alphaFloor: 0.35,
   alphaPower: 2.2,
   rotationJitter: 0.3,
 }
 
 /** Multiplier on the atlas mask; 1 is fully opaque at a filament's densest point. */
-export const DUST_ABSORB = 0.85
+export const DUST_ABSORB = 0.65
 /** Per-channel absorption: red passes most, blue least, so lanes read brown. */
 export const DUST_TINT: [number, number, number] = [0.55, 0.78, 1.0]
 
@@ -90,7 +90,7 @@ export const ATLAS_ROWS = 2
 export const ELONGATED_FROM = 4
 export const ELONGATED_ASPECT = 2.5
 /** How much of the cloud absorption is confined to the lanes (0 uniform, 1 lanes only). */
-export const DUST_ARM = 0.6
+export const DUST_ARM = 0.3
 
 /**
  * Fades dust absorption to zero near the galactic plane. The far/near star

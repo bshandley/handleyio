@@ -238,14 +238,11 @@ therefore starts at +0000S.
 
 ### Camera (`controls.ts`)
 
-- `minPolarAngle` 0, `maxPolarAngle` 78 degrees: a single hemisphere above
-  the plane. The polar angle is measured from +Y, so 0 is the pole
-  straight overhead (top-down is allowed) and 78 degrees is the closest
-  the camera comes to the plane, 12 degrees off it. This is the fix for
-  the white-sheet zoom and for the edge-on view where the y-split cannot
-  render dust. It is a change to the interaction contract round one kept
-  fixed, accepted for this round.
-- `minDistance` 4 to 5.5. The breathing zoom's margin logic is unchanged.
+- Round one's limits stand: any polar angle (the galaxy can be viewed from
+  underneath) and `minDistance` 4. The round-two clamp (12 degrees off the
+  plane, `minDistance` 5.5) was rejected by eye after shipping as too
+  limiting and too small; see the rework deviation below. The dust plane
+  fade (`dustFade`) covers the edge-on crossing as in round one.
 - Everything else (drift, breathing, fly-to, gesture gating) unchanged.
 
 ### Tone mapping (`post.ts`)
@@ -508,3 +505,42 @@ the plan's constants table.
   INC near 0, and the upward drag started at y = 800 on a 720 px viewport,
   off canvas, so OrbitControls never saw it; it now starts inside the
   viewport and asserts the 78 degree clamp is reached.
+- Rework after the 2026-09-12 revert: the merged build rendered a black
+  scene at level 0 on real GPUs (Apple Metal, all three desktop browsers)
+  while every headless capture had looked fine. Cause: `pow(w, uArmPower)`
+  in the GLSL `orbitArmness`; `w = 0.5 + 0.5 cos(...)` rounds a hair below
+  zero on Metal, `pow` returns NaN, and the bloom blur spreads NaN across
+  the frame (rungs without bloom only lose single stars). Fix:
+  `pow(max(w, 0.0), uArmPower)`. SwiftShader clamps this case, so real-GPU
+  captures (Chromium new headless keeps Metal acceleration) are now part of
+  the by-eye check at levels 0, 3, and 4 plus phone emulation.
+- Rework, camera: `MIN_DISTANCE` back to 4 and no polar clamp (Bradley:
+  the smaller view and the loss of the under-plane view felt too limiting).
+  `MAX_POLAR_DEG` removed; the e2e test now asserts the camera can orbit
+  below the plane.
+- Rework, phone rungs: the haze and lanes collapsed at half glow and dust
+  fractions because the tuning concentrated both into the arms. `GLOW_ARM`
+  0.85 to 0.55, `GLOW_DEFAULTS.alpha` 0.048 to 0.07, `DUST_ARM` 0.6 to 0.3,
+  `alphaFloor` 0.28 to 0.45, and ladder levels 2 to 4 draw 0.75 of the glow
+  and dust instead of 0.5. The dust opacity test now measures "skewed thin"
+  against the floor-to-one range rather than an absolute 0.5.
+- Rework, second pass (Bradley on the preview: distracting diagonal lines
+  in the stars, and less gas than the checkpoint): clusters no longer share
+  one exact orbit; members jitter in a (0.12) with a narrow phase jitter
+  (0.06), so a cluster is a round knot rather than a one-dimensional arc
+  that swept as a bright streak. The finish-pass grain uses interleaved
+  gradient noise with a per-frame pixel offset instead of the sin-based
+  hash, which bands diagonally on Apple GPUs. Gas restored with `GLOW_ARM`
+  0.4, glow alpha 0.09, bulge halo sigma 2.0 with y flatten 0.5, and
+  `ARM_LUM` 1.0 to soften the hard white ridge.
+- Rework, third pass (Bradley on the preview: gas looked like spheres
+  peppered about; node tags unreadable over the disc): glow sprites now
+  sample the procedural cloud atlas (same builder as the dust, own seed)
+  under a soft radial envelope, with a skewed size range 0.1 to 0.55 and
+  alpha 0.13, so the gas is irregular wisps. Beacon tags sit on a dark
+  translucent pill with a faint accent border and brighter text.
+- Rework, fourth pass (Bradley at range 6.7: gas too splotchy and dark):
+  7000 glow sprites, sizes 0.1 to 0.42, alpha 0.115, a softer radial
+  envelope with the cloud mask at half weight, bulge halo sprites 1.1x
+  with y flatten 0.4; `DUST_ABSORB` 0.65 and dust `alphaFloor` 0.35 so the
+  inter-arm field is no longer muddy brown.

@@ -182,7 +182,7 @@ test('the first-visit hint sits in the lower third', async ({ page }) => {
   expect(box!.y).toBeGreaterThan(height * 0.66)
 })
 
-test('the camera stays above the plane and at least 12 degrees off it', async ({ page }) => {
+test('the camera can orbit below the galactic plane', async ({ page }) => {
   // CI's software GL renders a frame or two per second, so each mouse step
   // is slow and the damped camera settles late: few steps, and poll the
   // telemetry instead of sleeping a fixed time.
@@ -193,26 +193,11 @@ test('the camera stays above the plane and at least 12 degrees off it', async ({
     const text = await page.locator('.hud-tele-br .hud-tele-line').nth(1).textContent()
     return Number((text ?? '').replace(/\D/g, ''))
   }
-  // drag downward: the camera rises to the pole (INC near 0). The drag is
-  // only a little longer than needed so the damped residual that keeps
-  // pushing after the clamp is small, and it gets a moment to decay before
-  // the opposite drag.
-  await page.mouse.move(800, 200)
-  await page.mouse.down()
-  await page.mouse.move(800, 560, { steps: 6 })
-  await page.mouse.up()
-  await expect.poll(inclination, { timeout: 20000 }).toBeLessThanOrEqual(5)
-  await page.waitForTimeout(2000)
-  // drag far upward (inside the 720 px viewport): the camera approaches the
-  // plane and stops at the 78 degree clamp
+  // drag upward inside the 720 px viewport: the camera dives through the
+  // plane (INC 90) and keeps going; no clamp stops it
   await page.mouse.move(800, 700)
   await page.mouse.down()
   await page.mouse.move(800, 20, { steps: 6 })
   await page.mouse.up()
-  await expect
-    .poll(async () => {
-      const inc = await inclination()
-      return inc >= 70 && inc <= 78
-    }, { timeout: 20000 })
-    .toBe(true)
+  await expect.poll(inclination, { timeout: 20000 }).toBeGreaterThan(100)
 })
