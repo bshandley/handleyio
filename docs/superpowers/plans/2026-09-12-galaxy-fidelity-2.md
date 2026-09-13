@@ -2374,6 +2374,7 @@ Fill the Final column as you go. Every value here is the tuning record for this 
 | `BEACON_INTENSITY / BEACON_SIZE` | src/nodes/beacons.ts | 1.8 / 0.55 | 1.8 / 0.55 (untouched; reads well) |
 | `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | 0.5 (untouched) |
 | `MAX_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 78 / 5.5 (whole-branch review: 12/168 forbade the poles, not the plane; single hemisphere clamp, `MIN_DISTANCE` untouched) |
+| `DIRECT_PATH_SCALE` (new; not in the spec's table) | src/render/post.ts | n/a | 0.4 (whole-branch review: the direct path has no tone mapper, so the layers tuned for the HDR curve clipped the core and giants flat white; `final-direct-load.png` confirmed 0.4 keeps individual bulge stars visible with no flat white disc) |
 
 - [x] **Step 3: Ten-minute check**
 

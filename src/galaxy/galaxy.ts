@@ -32,6 +32,7 @@ export interface Galaxy {
   setPixelRatio(pr: number): void
   /** Draw the far half before the dust layer and the near half after it. */
   setCameraSide(cameraAbovePlane: boolean): void
+  setIntensity(value: number): void
   rebuild(count: number): void
   dispose(): void
 }
@@ -77,6 +78,9 @@ export function createGalaxy(
     },
     setPixelRatio(pr) {
       material.uniforms.uSize.value = BASE_POINT_SIZE * pr
+    },
+    setIntensity(value) {
+      material.uniforms.uIntensity.value = value
     },
     setCameraSide(cameraAbovePlane) {
       below.renderOrder = cameraAbovePlane ? RENDER_ORDER.farStars : RENDER_ORDER.nearStars

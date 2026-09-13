@@ -145,6 +145,7 @@ export interface GlowLayer {
   setFraction(fraction: number): void
   /** Camera distance to the origin; attenuates the haze as the camera closes in. */
   setProximity(distance: number): void
+  setIntensity(value: number): void
   dispose(): void
 }
 
@@ -190,6 +191,9 @@ export function createGlow(
     },
     setProximity(distance) {
       uniforms.uProximity.value = distance
+    },
+    setIntensity(value) {
+      uniforms.uIntensity.value = value
     },
     dispose() {
       geometry.dispose()

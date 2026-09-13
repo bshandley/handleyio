@@ -2,11 +2,11 @@ import { Clock, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
 import { createArmModel } from './galaxy/arms'
 import { createDeepField } from './galaxy/deepfield'
 import { createDust, dustFade } from './galaxy/dust'
-import { createGalaxy, type Galaxy } from './galaxy/galaxy'
-import { createGlow } from './galaxy/glow'
+import { createGalaxy, STAR_INTENSITY, type Galaxy } from './galaxy/galaxy'
+import { createGlow, GLOW_INTENSITY } from './galaxy/glow'
 import { createStarfield } from './galaxy/starfield'
 import type { QualityLevel } from './quality'
-import { createPost, parseExposureParam, parseToneParam, type PostChain } from './render/post'
+import { createPost, DIRECT_PATH_SCALE, parseExposureParam, parseToneParam, type PostChain } from './render/post'
 
 export interface GalaxyScene {
   scene: Scene
@@ -73,6 +73,12 @@ export function createScene(container: HTMLElement, level: QualityLevel): Galaxy
     exposure: parseExposureParam(location.search) ?? undefined,
   })
   window.__renderPath = post.path
+  // The direct path has no tone mapper, so the layers tuned for the HDR
+  // path's curve clip flat; dim them to keep the core and giants in range.
+  if (post.path === 'direct') {
+    galaxy.setIntensity(STAR_INTENSITY * DIRECT_PATH_SCALE)
+    glow.setIntensity(GLOW_INTENSITY * DIRECT_PATH_SCALE)
+  }
 
   let currentStars = level.stars
   const layout = () => {

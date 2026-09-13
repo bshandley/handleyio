@@ -488,3 +488,13 @@ the plan's constants table.
   rows were swapped, so clumps rendered elongated and clouds rendered
   round. Fixed with `texture.flipY = false`; clump look re-checked
   before merge.
+- Whole-branch review (Important): Task 12's tuning raised star
+  intensity, luminosity, and armness about tenfold over round one,
+  judged only against the HDR path's tone-mapped output. The direct
+  (no-HDR) path renders straight to the screen buffer with no tone
+  mapper, so giants and the core clipped flat to white. Added
+  `Galaxy.setIntensity`/`GlowLayer.setIntensity`, and `DIRECT_PATH_SCALE
+  = 0.4` in `src/render/post.ts`, applied to `galaxy`/`glow` only when
+  `post.path === 'direct'`. Verified with
+  `scripts/capture-look.mjs`'s new `direct` flag: `final-direct-load.png`
+  shows individual bulge stars with no flat white disc.

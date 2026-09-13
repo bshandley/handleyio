@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { finishShader, GRAIN, hdrSupported } from '../src/render/post'
+import { DIRECT_PATH_SCALE, finishShader, GRAIN, hdrSupported } from '../src/render/post'
 import { parseExposureParam, parseToneParam, TONE_MAPPER } from '../src/render/post'
 
 describe('hdrSupported', () => {
@@ -43,5 +43,12 @@ describe('tone pin', () => {
 
   it('ships one of the two mappers', () => {
     expect(['agx', 'neutral']).toContain(TONE_MAPPER)
+  })
+})
+
+describe('direct path scale', () => {
+  it('dims the layers rather than brightening or leaving them unchanged', () => {
+    expect(DIRECT_PATH_SCALE).toBeGreaterThan(0)
+    expect(DIRECT_PATH_SCALE).toBeLessThan(1)
   })
 })

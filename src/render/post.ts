@@ -29,6 +29,14 @@ export type ToneMapper = 'agx' | 'neutral'
  */
 export const TONE_MAPPER: ToneMapper = 'neutral'
 export const EXPOSURE = 0.85
+/**
+ * Star intensity, luminosity and armness together raised the peak fragment
+ * radiance about tenfold over round one. The HDR path tone-maps that down,
+ * but the direct (no-HDR) path renders straight to the screen buffer with
+ * no tone mapper, so giants and the core clip flat to white. Scale the
+ * galaxy and glow intensities by this factor on the direct path only.
+ */
+export const DIRECT_PATH_SCALE = 0.4
 export const BLOOM = { strength: 0.3, radius: 0.6, threshold: 1.0 }
 export const VIGNETTE = 0.35
 /** Animated grain strength, in 8-bit LSBs at black. */

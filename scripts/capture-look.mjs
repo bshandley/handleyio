@@ -6,13 +6,24 @@
 // "top" drags the camera up over the disc so the spiral can be judged from
 // overhead. A fourth argument, seconds, waits that long after load (sim
 // time keeps advancing) before the pose and screenshot, for stability
-// checks well past the idle-drift settle window.
+// checks well past the idle-drift settle window. A fifth argument, any
+// non-empty string, forces the direct (no-HDR) path by stubbing out the
+// float color buffer extensions, the same way e2e/smoke.spec.ts does.
 import { chromium } from '@playwright/test'
 
-const [, , out = 'look.png', params = '', pose = '', waitSeconds = ''] = process.argv
+const [, , out = 'look.png', params = '', pose = '', waitSeconds = '', direct = ''] = process.argv
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } })
 await page.route('https://api.github.com/**', (route) => route.fulfill({ json: [] }))
+if (direct) {
+  await page.addInitScript(() => {
+    const original = WebGL2RenderingContext.prototype.getExtension
+    WebGL2RenderingContext.prototype.getExtension = function (name) {
+      if (name === 'EXT_color_buffer_float' || name === 'EXT_color_buffer_half_float') return null
+      return original.call(this, name)
+    }
+  })
+}
 await page.goto(`http://localhost:4173/?level=0&${params}`, { waitUntil: 'networkidle' })
 await page.waitForTimeout(6000)
 const extraMs = Number(waitSeconds) > 0 ? Number(waitSeconds) * 1000 : 0
