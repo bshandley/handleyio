@@ -2334,7 +2334,7 @@ git commit -m "feat: beacon designation tags, hint moved to the lower third"
 - Modify: `docs/superpowers/specs/2026-09-12-galaxy-fidelity-2-design.md` (deviations section)
 - Modify: `CLAUDE.md` (bindings), `public/og.png`
 
-- [ ] **Step 1: Capture the tuning set**
+- [x] **Step 1: Capture the tuning set**
 
 ```bash
 npm run build && (npx vite preview --port 4173 --strictPort &) && sleep 2
@@ -2345,7 +2345,7 @@ node scripts/capture-look.mjs /tmp/look/zoom.png "" zoom
 
 Read both. Check against the spec's success criteria: two arms with no ring-up; faint-to-bright stars with a few blooming giants; blue outer arms, gold-to-white core; peaked bulge with spill; a closest zoom that still reads as a galaxy; filamentary lanes with knots; beacons as stars; textured background. Adjust one constant at a time, recapture, and fill the table.
 
-- [ ] **Step 2: Constants table**
+- [x] **Step 2: Constants table**
 
 Fill the Final column as you go. Every value here is the tuning record for this round.
 
@@ -2375,11 +2375,11 @@ Fill the Final column as you go. Every value here is the tuning record for this 
 | `STARFIELD_INTENSITY` | src/galaxy/starfield.ts | 0.5 | 0.5 (untouched) |
 | `MIN_POLAR_DEG / MIN_DISTANCE` | src/camera/controls.ts | 12 / 5.5 | 12 / 5.5 (untouched) |
 
-- [ ] **Step 3: Ten-minute check**
+- [x] **Step 3: Ten-minute check**
 
 With the preview running, open `http://localhost:4173/?level=0` in a real browser, note SIM-T, and come back after ten minutes. The arm structure must be unchanged from load. If the inner disc has developed a ring or the arms have drifted apart, `ORBIT.pattern` and `eFalloff` are the levers (the pattern is stationary by construction; a visible change means a layer is not on the shared chunk, which is a bug to find, not a value to tune).
 
-- [ ] **Step 4: Social card**
+- [x] **Step 4: Social card**
 
 ```bash
 node scripts/capture-og.mjs
@@ -2387,18 +2387,20 @@ node scripts/capture-og.mjs
 
 Read `public/og.png` and confirm it shows the new look.
 
-- [ ] **Step 5: Docs**
+- [x] **Step 5: Docs**
 
 - Spec: append to "Deviations accepted during the build": attribute names kept (`aRadius`/`aAngle` now mean a and phase); spurs retired; per-instance `aTilt` instead of a material uniform; the `?tone=` and `?exposure=` pins; anything else that changed from the spec during Tasks 1 to 11; the tone-mapping decision.
 - CLAUDE.md bindings: add the round-two spec and plan lines under Bindings, mirroring the round-one entries; note that `scripts/capture-look.mjs` exists for tuning captures.
 - Memory: update `galaxy-fidelity-round.md` in the memory directory with the new state (what shipped, remaining follow-ups, whether Linear was used).
 
-- [ ] **Step 6: Full verification**
+- [x] **Step 6: Full verification**
 
 Run: `npm test && npm run build && npm run e2e`
 Expected: all green on chromium and firefox.
 
 - [ ] **Step 7: Commit and ship**
+
+Push and CI watch performed by the controller after the final review.
 
 ```bash
 git add -A

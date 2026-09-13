@@ -386,6 +386,18 @@ the plan's constants table.
   `agx-085.png`, `neutral-085.png`, `agx-110.png`, `neutral-110.png`
   (`?tone=agx|neutral&exposure=0.85|1.1`). `?tone=` and `?exposure=` are
   dev aids only, parsed once at scene construction, not user-facing.
+- `solveElements` (Task 2): the spec called for plain fixed-point
+  iteration. Instrumented tracing on one registry position showed the
+  plain loop converging only linearly, with successive errors shrinking
+  by a factor of roughly 0.89 per step, needing on the order of 90
+  iterations to reach the round-trip tolerance rather than the dozen or
+  so assumed. Shipped a guarded Steffensen/Aitken-accelerated iteration
+  instead: 8 cycles of two plain fixed-point steps each, combined by
+  Aitken extrapolation, 16 fixed-point evaluations total (the same
+  evaluation budget as the plain loop the brief specified), with a guard
+  that falls back to the plain next iterate when the extrapolation would
+  be degenerate or overshoot. Converges to about 1e-14 for every real
+  call site.
 - Attribute names kept their round-one spelling with a new meaning:
   `aRadius`/`aAngle` on the star and billboard buffers now carry the
   ellipse semi-major axis `a` and orbital phase, not a polar radius and
@@ -408,6 +420,20 @@ the plan's constants table.
   base inside the ring radius. Replaced with `float dr = (len - ringR) *
   40.0; exp(-dr * dr) * (...)`, mathematically identical for all signs of
   `dr` (found and fixed during Task 7's review).
+- `e2e/smoke.spec.ts`, `'telemetry draw count covers the whole frame on
+  the hdr path'` (Task 7): beacons collapsing from five per-node sprites
+  to one instanced mesh drops the floor-scene draw count from 7 to 5
+  (background 1, deep field 1, two star halves 2, one beacon mesh 1); the
+  composer's output and finish passes bring the full-frame count back to
+  7. Assertion changed from `toBeGreaterThan(7)` to
+  `toBeGreaterThanOrEqual(7)`, with the comment deriving the number.
+- `e2e/mobile.spec.ts`, `'tapping a beacon opens its panel'` (Task 11):
+  sim time now starts at 0, and on the Pixel 7 portrait viewport at load
+  the github beacon projects off screen (x = 505 on a 412px-wide
+  viewport) while other beacons are on screen. The test now evaluates
+  every node's projected position, picks whichever is on screen and
+  nearest the viewport centre, and taps that one instead of a fixed node
+  id.
 - `generateGlow`/`generateDust`'s `model` parameter, unused since the
   spur system was retired, is named `_model` to satisfy
   `noUnusedParameters`; position and type are kept for later reuse.

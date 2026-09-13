@@ -29,6 +29,7 @@ if (pose === 'zoom') {
   await page.mouse.down()
   for (let i = 1; i <= steps; i++) {
     await page.mouse.move(800, 450 - (350 * i) / steps)
+    await page.waitForTimeout(20)
   }
   await page.mouse.up()
   await page.waitForTimeout(2500)
