@@ -43,7 +43,7 @@ export const GALAXY_DEFAULTS: GalaxyParams = {
   bulgeFraction: 0.12,
   bulgeCoreShare: 0.35,
   bulgeCoreSigma: 0.3,
-  bulgeHaloSigma: 2.5,
+  bulgeHaloSigma: 1.4,
   palette: PALETTE,
 }
 
@@ -76,6 +76,9 @@ export interface GalaxyBuffers {
 const CLUMP_FRACTION = 0.15 // star-forming clusters along the arms
 const FIELD_FRACTION = 0.08 // unstructured disc/halo stars
 const BRIGHT_GIANT_CUTOFF = 0.995 // of the size power law; ~0.13% of disc stars
+// Cluster members dim (giants excepted) so a cluster reads as a sparkle of
+// stars rather than one bright smear under additive blending.
+export const CLUSTER_LUM_FACTOR = 0.6
 
 // Luminosity function: brightness grows with the square of size so most
 // stars are faint and the few giants carry the light (and cross 1.0 in the
@@ -156,7 +159,7 @@ export function generateGalaxy(
     } else if (inClump) {
       const c = clusters[Math.floor(rand() * clusters.length)]
       r = c.a
-      a = c.phase + (gauss() * 0.06) / Math.max(0.4, c.a * 0.5)
+      a = c.phase + (gauss() * 0.16) / Math.max(0.4, c.a * 0.5)
       yy = c.y + gauss() * p.thickness * 0.25
       e = eccentricityAt(r)
       clusterMember = true
@@ -209,7 +212,10 @@ export function generateGalaxy(
     size[i] = baseSize * (inBulge ? 1.2 : 1.0)
     spike[i] = giant ? 1 : 0
     const norm = baseSize / SIZE_MAX
-    lum[i] = (LUM_FLOOR + LUM_SCALE * norm * norm) * (giant ? GIANT_LUM : 1.0)
+    lum[i] =
+      (LUM_FLOOR + LUM_SCALE * norm * norm) *
+      (giant ? GIANT_LUM : 1.0) *
+      (clusterMember && !giant ? CLUSTER_LUM_FACTOR : 1.0)
 
     color[i * 3] = clamp01(cr * jitter)
     color[i * 3 + 1] = clamp01(cg * jitter)

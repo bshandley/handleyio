@@ -64,13 +64,13 @@ export const DUST_DEFAULTS: DustParams = {
   clumpFraction: 0.15,
   clumpSizeMin: 0.08,
   clumpSizeMax: 0.16,
-  alphaFloor: 0.15,
+  alphaFloor: 0.28,
   alphaPower: 2.2,
   rotationJitter: 0.3,
 }
 
 /** Multiplier on the atlas mask; 1 is fully opaque at a filament's densest point. */
-export const DUST_ABSORB = 0.65
+export const DUST_ABSORB = 0.85
 /** Per-channel absorption: red passes most, blue least, so lanes read brown. */
 export const DUST_TINT: [number, number, number] = [0.55, 0.78, 1.0]
 

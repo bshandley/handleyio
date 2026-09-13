@@ -22,10 +22,10 @@ export interface OrbitParams {
 }
 
 export const ORBIT: OrbitParams = {
-  spin: 0.95,
+  spin: 1.7,
   wobble: 0.1,
   pattern: 0.02,
-  eInner: 0.35,
+  eInner: 0.55,
   eFalloff: 0.5,
   radius: 4.5,
 }

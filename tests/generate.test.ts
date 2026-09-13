@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createArmModel } from '../src/galaxy/arms'
 import {
+  CLUSTER_LUM_FACTOR,
   GALAXY_DEFAULTS,
   GIANT_LUM,
   LUM_FLOOR,
@@ -106,7 +107,10 @@ describe('generateGalaxy', () => {
     let maxLum = 0
     let dim = 0
     for (let i = 0; i < 5000; i++) {
-      expect(g.lum[i]).toBeGreaterThanOrEqual(LUM_FLOOR - 1e-9)
+      // Cluster members (giants excepted) dim by CLUSTER_LUM_FACTOR so a
+      // cluster reads as a sparkle of stars rather than one bright smear,
+      // so the effective floor for them sits below LUM_FLOOR.
+      expect(g.lum[i]).toBeGreaterThanOrEqual(LUM_FLOOR * CLUSTER_LUM_FACTOR - 1e-9)
       expect(g.lum[i]).toBeLessThanOrEqual((LUM_FLOOR + LUM_SCALE) * GIANT_LUM + 1e-9)
       if (g.spike[i] === 1) expect(g.lum[i]).toBeGreaterThan(1)
       if (g.lum[i] < 0.3) dim++

@@ -47,7 +47,7 @@ export const GLOW_DEFAULTS: GlowParams = {
   bulgeFraction: 0.25,
   bulgeCoreShare: 0.4,
   bulgeCoreSigma: 0.3,
-  bulgeHaloSigma: 2.5,
+  bulgeHaloSigma: 1.4,
   sizeMin: 0.12,
   sizeMax: 0.36,
   alpha: 0.048,
@@ -61,7 +61,7 @@ export const GLOW_DEFAULTS: GlowParams = {
 export const GLOW_INTENSITY = 0.8
 
 /** How much of the disc haze is confined to the arms (0 uniform, 1 arms only). */
-export const GLOW_ARM = 0.7
+export const GLOW_ARM = 0.85
 /** Camera distance to the origin at which the haze is at full strength / attenuated to `min`. */
 export const PROXIMITY = { far: 7.0, near: 5.5, min: 0.45 }
 
@@ -92,7 +92,7 @@ export function generateGlow(
       const gz = gauss() * 2 * p.bulgeRadius * sigma
       r = Math.hypot(gx, gz)
       a = Math.atan2(gz, gx)
-      yy = gauss() * 2 * p.bulgeRadius * sigma * 0.6
+      yy = gauss() * 2 * p.bulgeRadius * sigma * 0.35
       color = p.palette[0]
     } else {
       r = (GLOW_FLOOR + (1 - GLOW_FLOOR) * Math.pow(rand(), GLOW_EXPONENT)) * p.radius

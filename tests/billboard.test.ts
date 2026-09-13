@@ -6,6 +6,7 @@ import {
   createBillboardGeometry,
   setInstanceFraction,
 } from '../src/galaxy/billboard'
+import { ORBIT } from '../src/galaxy/orbit'
 
 describe('billboard geometry', () => {
   const buffers = allocBillboards(10)
@@ -58,7 +59,7 @@ describe('billboard geometry', () => {
 
   it('uniform set carries the orbit constants', () => {
     const u = billboardUniforms(800, 600)
-    expect(u.uSpin.value).toBe(0.95)
+    expect(u.uSpin.value).toBe(ORBIT.spin)
     expect(u.uPattern.value).toBeGreaterThan(0)
     expect(u.uAlign.value).toBe(0)
   })
